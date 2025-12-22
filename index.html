@@ -310,3 +310,34 @@
                 score++;
                 energy--;
                 if(navigator.vibrate) navigator.vibrate(10);
+                updateUI();
+                
+                // Efecto visual simple
+                const el = document.createElement('div');
+                el.innerText = "+1";
+                el.style.position = 'fixed';
+                el.style.left = e.clientX + 'px';
+                el.style.top = e.clientY + 'px';
+                el.style.color = 'white';
+                el.style.pointerEvents = 'none';
+                el.style.fontWeight = 'bold';
+                document.body.appendChild(el);
+                setTimeout(() => el.remove(), 500);
+            }
+        });
+
+        // CAMBIAR PESTAÑAS
+        function switchTab(tab, btn) {
+            ['home', 'mine', 'wallet'].forEach(t => document.getElementById('view-'+t).classList.add('hidden'));
+            document.getElementById('view-'+tab).classList.remove('hidden');
+            document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+        }
+
+        // INICIAR
+        renderShop();
+        updateUI();
+
+    </script>
+</body>
+</html>
