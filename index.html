@@ -3,43 +3,59 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Satoshi Overdrive Pro</title>
+    <title>Satoshi Mining Pro</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <script src="https://unpkg.com/@tonconnect/ui@latest/dist/tonconnect-ui.min.js"></script>
 
     <style>
-        :root { --bg-dark: #05000a; --ton-blue: #0098EA; }
+        :root { --bg-dark: #05000a; --ton-blue: #0098EA; --success: #4ade80; --locked: #ef4444; }
         body { background-color: var(--bg-dark); color: white; font-family: sans-serif; margin: 0; padding: 0; user-select: none; }
         .main-container { padding: 20px 20px 100px 20px; height: 100vh; overflow-y: auto; box-sizing: border-box; }
         .hidden { display: none !important; }
+        
+        /* Tarjetas */
         .card { background: rgba(19, 0, 38, 0.8); border: 1px solid rgba(255,255,255,0.1); border-radius: 20px; padding: 20px; margin-bottom: 15px; }
-        .btn { background: linear-gradient(90deg, #7c3aed, #db2777); border: none; color: white; padding: 15px; border-radius: 12px; width: 100%; font-weight: bold; margin-top: 10px; cursor: pointer; }
+        
+        /* Botones */
+        .btn { background: linear-gradient(90deg, #7c3aed, #db2777); border: none; color: white; padding: 15px; border-radius: 12px; width: 100%; font-weight: bold; margin-top: 10px; cursor: pointer; transition: 0.2s; }
+        .btn:active { transform: scale(0.95); }
         .btn-ton { background: #0098EA; }
-        .nav-dock { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: rgba(20,20,40,0.9); padding: 10px 30px; border-radius: 50px; display: flex; gap: 30px; border: 1px solid rgba(255,255,255,0.1); z-index: 100; }
-        .nav-item { color: #666; background: none; border: none; font-size: 24px; cursor: pointer; }
+        .btn-disabled { background: #333; color: #666; cursor: not-allowed; }
+        
+        /* Navegación */
+        .nav-dock { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: rgba(20,20,40,0.95); padding: 10px 20px; border-radius: 50px; display: flex; gap: 25px; border: 1px solid rgba(255,255,255,0.1); z-index: 100; box-shadow: 0 5px 20px rgba(0,0,0,0.5); }
+        .nav-item { color: #666; background: none; border: none; font-size: 24px; cursor: pointer; display: flex; flex-direction: column; align-items: center; }
+        .nav-item span { font-size: 8px; font-weight: bold; margin-top: 4px; }
         .nav-item.active { color: #d946ef; }
-        #coin-btn { width: 220px; height: 220px; background: radial-gradient(circle, #4c1d95, #000); border-radius: 50%; border: 4px solid #7c3aed; margin: 20px auto; display: flex; justify-content: center; align-items: center; font-size: 80px; box-shadow: 0 0 50px rgba(124, 58, 237, 0.5); }
+        
+        /* Clicker */
+        #coin-btn { width: 220px; height: 220px; background: radial-gradient(circle, #4c1d95, #000); border-radius: 50%; border: 4px solid #7c3aed; margin: 20px auto; display: flex; justify-content: center; align-items: center; font-size: 80px; box-shadow: 0 0 50px rgba(124, 58, 237, 0.5); position: relative; }
         #coin-btn:active { transform: scale(0.95); }
+
+        /* Barras de Progreso (Retiro) */
+        .progress-bg { width: 100%; background: #333; height: 8px; border-radius: 5px; margin-top: 5px; overflow: hidden; }
+        .progress-fill { height: 100%; transition: width 0.5s; }
+        .req-text { font-size: 10px; display: flex; justify-content: space-between; margin-top: 10px; text-transform: uppercase; font-weight: bold; }
     </style>
 </head>
 <body>
 
     <div class="main-container">
         <div id="view-home">
-            <h2 style="text-align:center; margin:0;">SATOSHI <span style="color:#facc15">OD</span></h2>
+            <h2 style="text-align:center; margin:0;">SATOSHI <span style="color:#facc15">PRO</span></h2>
             <p style="text-align:center; font-size:12px; color:#aaa;">POTENCIA: <span id="rate">0</span> SATS/s</p>
             
             <div class="card">
                 <div style="display:flex; justify-content:space-between; font-size:12px; color:#ccc;">
                     <span>ALMACÉN</span> <span id="storage-txt">0/1000</span>
                 </div>
-                <div style="background:#333; height:5px; margin:5px 0; border-radius:5px;"><div id="storage-bar" style="background:#06b6d4; width:0%; height:100%;"></div></div>
+                <div class="progress-bg"><div id="storage-bar" class="progress-fill" style="background:#06b6d4; width:0%;"></div></div>
                 <button class="btn" onclick="claim()">RECLAMAR</button>
             </div>
 
             <div style="text-align:center; margin: 20px 0;">
-                <h1 id="score" style="font-size:50px; margin:0;">0</h1>
+                <h1 id="score" style="font-size:40px; margin:0;">0</h1>
                 <small style="color:#666; font-weight:bold;">BALANCE TOTAL</small>
             </div>
 
@@ -52,66 +68,140 @@
             <div id="shop-list"></div>
         </div>
 
+        <div id="view-friends" class="hidden">
+            <h2 style="text-align:center;">CYBER SQUAD</h2>
+            <div class="card" style="text-align:center;">
+                <h1 id="friends-count" style="font-size: 50px; margin: 10px 0; color: #d946ef;">0</h1>
+                <p style="font-size: 10px; font-weight: bold; letter-spacing: 2px;">AMIGOS RECLUTADOS</p>
+                <hr style="border: 0; border-top: 1px solid #333; margin: 20px 0;">
+                <p style="font-size: 12px; color: #aaa;">Invita amigos para desbloquear retiros. Necesitas 20 amigos.</p>
+                <button class="btn" onclick="inviteFriend()">INVITAR AMIGOS</button>
+                
+                <button class="btn" style="background: #333; font-size: 10px; margin-top: 20px;" onclick="simulateReferral()">🛠️ SIMULAR NUEVO AMIGO (TEST)</button>
+            </div>
+        </div>
+
         <div id="view-wallet" class="hidden">
             <div class="card" style="text-align:center;">
-                <h3>MI BILLETERA</h3>
+                <h3>BÓVEDA</h3>
                 <h1 id="wallet-score">0</h1>
                 <p style="color:#34d399;" id="usdt-val">≈ $0.00</p>
                 <div id="ton-connect" style="margin-top:20px; display:flex; justify-content:center;"></div>
+            </div>
+
+            <div class="card">
+                <h4 style="margin: 0 0 15px 0; font-style: italic;">REQUISITOS DE RETIRO</h4>
+                
+                <div class="req-text">
+                    <span>Saldo (Min 500k)</span>
+                    <span id="req-score-txt" style="color:#ef4444">0 / 500,000</span>
+                </div>
+                <div class="progress-bg"><div id="req-score-bar" class="progress-fill" style="background:#ef4444; width:0%;"></div></div>
+
+                <div class="req-text">
+                    <span>Amigos (Min 20)</span>
+                    <span id="req-friends-txt" style="color:#ef4444">0 / 20</span>
+                </div>
+                <div class="progress-bg"><div id="req-friends-bar" class="progress-fill" style="background:#ef4444; width:0%;"></div></div>
+
+                <button id="btn-withdraw" class="btn btn-disabled" style="margin-top: 20px;" onclick="tryWithdraw()">SOLICITAR RETIRO</button>
             </div>
         </div>
     </div>
 
     <div class="nav-dock">
-        <button class="nav-item active" onclick="go('home', this)">🏠</button>
-        <button class="nav-item" onclick="go('mine', this)">⚡</button>
-        <button class="nav-item" onclick="go('wallet', this)">💎</button>
+        <button class="nav-item active" onclick="go('home', this)">🏠<span>BASE</span></button>
+        <button class="nav-item" onclick="go('mine', this)">⚡<span>RIG</span></button>
+        <button class="nav-item" onclick="go('friends', this)">👥<span>SQUAD</span></button>
+        <button class="nav-item" onclick="go('wallet', this)">💎<span>WALLET</span></button>
     </div>
 
     <script>
-        // CONFIGURACIÓN CRÍTICA
-        // ¡ASEGÚRATE QUE ESTA URL COINCIDA CON TU NOMBRE DE REPO EN GITHUB!
-        // Basado en tu foto, tu repo es "MININGSATOSHIPRO"
+        // --- CONFIGURACIÓN CORRECTA ---
+        
+        // 1. URL DE MANIFIESTO
         const MANIFEST_URL = "https://Kevin7041.github.io/MININGSATOSHIPRO/tonconnect-manifest.json";
+        
+        // 2. TU WALLET
         const ADMIN_WALLET = "UQAhKfWAyGxvnqR1J7ZUaJWs5xTJVJ2uTAMxB_vH-sL4zMt1";
+        
+        // 3. TU USUARIO DE BOT REAL
+        const BOT_USERNAME = "miningsatoshipro_bot"; 
 
         const tg = window.Telegram.WebApp;
         tg.expand();
         const connector = new TON_CONNECT_UI.TonConnectUI({ manifestUrl: MANIFEST_URL, buttonRootId: 'ton-connect' });
 
-        let data = { score: 0, energy: 1000, rate: 0, storage: 0 };
+        // Estado Inicial
+        let data = { score: 0, energy: 1000, rate: 0, storage: 0, friends: 0 };
         
-        // Cargar datos guardados
-        if(localStorage.getItem('save_v2')) data = JSON.parse(localStorage.getItem('save_v2'));
+        // Cargar partida guardada
+        if(localStorage.getItem('satoshi_v3')) data = JSON.parse(localStorage.getItem('satoshi_v3'));
 
+        // Configuración de Máquinas
         const machines = [
             { id: 1, name: "Starter Rig", price: 1, rate: 100 },
             { id: 2, name: "Turbo Miner", price: 5, rate: 600 },
             { id: 3, name: "God Mode", price: 30, rate: 5000 }
         ];
 
-        function save() { localStorage.setItem('save_v2', JSON.stringify(data)); }
+        // Guardado Automático
+        function save() { localStorage.setItem('satoshi_v3', JSON.stringify(data)); }
         setInterval(save, 5000);
 
+        // --- UI ---
         function render() {
-            document.getElementById('score').innerText = Math.floor(data.score);
-            document.getElementById('wallet-score').innerText = Math.floor(data.score);
+            document.getElementById('score').innerText = Math.floor(data.score).toLocaleString();
+            document.getElementById('wallet-score').innerText = Math.floor(data.score).toLocaleString();
             document.getElementById('usdt-val').innerText = "≈ $" + (data.score/1000000).toFixed(4);
             document.getElementById('rate').innerText = data.rate;
-            document.getElementById('energy').innerText = data.energy;
+            document.getElementById('energy').innerText = Math.floor(data.energy);
             document.getElementById('storage-txt').innerText = Math.floor(data.storage) + "/1000";
+            document.getElementById('friends-count').innerText = data.friends;
             document.getElementById('storage-bar').style.width = (data.storage/10) + "%";
+
+            // REQUISITOS DE RETIRO
+            const MIN_SCORE = 500000;
+            const MIN_FRIENDS = 20;
+
+            let scorePct = Math.min(100, (data.score / MIN_SCORE) * 100);
+            const scoreBar = document.getElementById('req-score-bar');
+            scoreBar.style.width = scorePct + "%";
+            document.getElementById('req-score-txt').innerText = `${Math.floor(data.score/1000)}k / 500k`;
+            if(data.score >= MIN_SCORE) { scoreBar.style.background = "#4ade80"; document.getElementById('req-score-txt').style.color = "#4ade80"; }
+
+            let friendPct = Math.min(100, (data.friends / MIN_FRIENDS) * 100);
+            const friendBar = document.getElementById('req-friends-bar');
+            friendBar.style.width = friendPct + "%";
+            document.getElementById('req-friends-txt').innerText = `${data.friends} / ${MIN_FRIENDS}`;
+            if(data.friends >= MIN_FRIENDS) { friendBar.style.background = "#4ade80"; document.getElementById('req-friends-txt').style.color = "#4ade80"; }
+
+            const btnWithdraw = document.getElementById('btn-withdraw');
+            if (data.score >= MIN_SCORE && data.friends >= MIN_FRIENDS) {
+                btnWithdraw.classList.remove('btn-disabled');
+                btnWithdraw.innerText = "SOLICITAR RETIRO AHORA";
+                btnWithdraw.style.background = "#4ade80";
+            } else {
+                btnWithdraw.classList.add('btn-disabled');
+                btnWithdraw.innerText = "BLOQUEADO: CUMPLE REQUISITOS";
+                btnWithdraw.style.background = "#333";
+            }
         }
 
-        // Tienda
-        const shop = document.getElementById('shop-list');
-        machines.forEach(m => {
-            shop.innerHTML += `
-            <div class="card" style="display:flex; justify-content:space-between; align-items:center;">
-                <div><b>${m.name}</b><br><small style="color:#0098EA">+${m.rate} SATS/s</small></div>
-                <button class="btn btn-ton" style="width:auto; padding:10px 20px;" onclick="buy(${m.id})">${m.price} TON</button>
-            </div>`;
-        });
+        // --- ACCIONES ---
+        document.getElementById('coin-btn').onclick = (e) => {
+            if(data.energy > 0) { 
+                data.score++; 
+                data.energy--; 
+                render(); 
+                if(navigator.vibrate) navigator.vibrate(10);
+                const el = document.createElement('div');
+                el.innerText = "+1"; el.style.position='fixed'; el.style.left=e.clientX+'px'; el.style.top=e.clientY+'px'; el.style.color='white'; el.style.pointerEvents='none'; el.style.fontWeight='bold';
+                document.body.appendChild(el); setTimeout(()=>el.remove(), 500);
+            }
+        };
+
+        function claim() { data.score += data.storage; data.storage = 0; render(); }
 
         async function buy(id) {
             if(!connector.connected) return tg.showAlert("❌ Conecta tu Wallet primero.");
@@ -128,19 +218,31 @@
             } catch(e) { tg.showAlert("❌ Pago cancelado."); }
         }
 
-        // Clicker & Bucles
-        document.getElementById('coin-btn').onclick = () => {
-            if(data.energy > 0) { data.score++; data.energy--; render(); if(navigator.vibrate) navigator.vibrate(10); }
-        };
-        
-        function claim() { data.score += data.storage; data.storage = 0; render(); }
-        
-        setInterval(() => {
-            if(data.rate > 0) data.score += data.rate;
-            if(data.storage < 1000) data.storage++;
-            if(data.energy < 1000) data.energy++;
+        function inviteFriend() {
+            const userId = tg.initDataUnsafe?.user?.id || 'anon';
+            const inviteLink = `https://t.me/${BOT_USERNAME}/app?startapp=ref_${userId}`;
+            const shareUrl = `https://t.me/share/url?url=${encodeURIComponent(inviteLink)}&text=${encodeURIComponent("¡Mina Satoshis gratis conmigo! 🚀")}`;
+            tg.openTelegramLink(shareUrl);
+        }
+
+        function simulateReferral() {
+            data.friends++;
+            tg.showAlert(`🎉 ¡Nuevo amigo simulado! Total: ${data.friends}`);
+            save();
             render();
-        }, 1000);
+        }
+
+        function tryWithdraw() {
+            if (data.score < 500000 || data.friends < 20) {
+                tg.showAlert("⚠️ Aún no cumples los requisitos.");
+                return;
+            }
+            if(!connector.connected) {
+                tg.showAlert("⚠️ Conecta tu wallet para recibir los fondos.");
+                return;
+            }
+            tg.showAlert("✅ SOLICITUD ENVIADA.\nTu retiro está siendo procesado manualmente.");
+        }
 
         function go(view, btn) {
             document.querySelectorAll('[id^=view-]').forEach(el => el.classList.add('hidden'));
@@ -148,6 +250,22 @@
             document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
             btn.classList.add('active');
         }
+
+        const shop = document.getElementById('shop-list');
+        machines.forEach(m => {
+            shop.innerHTML += `
+            <div class="card" style="display:flex; justify-content:space-between; align-items:center;">
+                <div><b>${m.name}</b><br><small style="color:#0098EA">+${m.rate} SATS/s</small></div>
+                <button class="btn btn-ton" style="width:auto; padding:10px 20px;" onclick="buy(${m.id})">${m.price} TON</button>
+            </div>`;
+        });
+
+        setInterval(() => {
+            if(data.rate > 0) data.score += data.rate;
+            if(data.storage < 1000) data.storage++;
+            if(data.energy < 1000) data.energy++;
+            render();
+        }, 1000);
 
         render();
     </script>
