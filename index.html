@@ -9,350 +9,147 @@
     <script src="https://unpkg.com/@tonconnect/ui@latest/dist/tonconnect-ui.min.js"></script>
 
     <style>
-        /* --- ESTILOS VISUALES --- */
-        :root {
-            --bg-dark: #05000a;
-            --card-bg: #130026;
-            --primary: #8b5cf6;
-            --ton-blue: #0098EA;
-        }
-        body {
-            background-color: var(--bg-dark);
-            color: white;
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            margin: 0; padding: 0; overflow: hidden; -webkit-tap-highlight-color: transparent;
-        }
-        .main-container {
-            height: 100vh; overflow-y: auto; padding: 20px 20px 120px 20px; box-sizing: border-box;
-            background-image: linear-gradient(rgba(139,92,246,0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(139,92,246,0.03) 1px, transparent 1px);
-            background-size: 40px 40px;
-        }
+        :root { --bg-dark: #05000a; --ton-blue: #0098EA; }
+        body { background-color: var(--bg-dark); color: white; font-family: sans-serif; margin: 0; padding: 0; user-select: none; }
+        .main-container { padding: 20px 20px 100px 20px; height: 100vh; overflow-y: auto; box-sizing: border-box; }
         .hidden { display: none !important; }
-        .flex { display: flex; }
-        .w-full { width: 100%; }
-        .text-center { text-align: center; }
-
-        /* Tarjetas y Botones */
-        .card {
-            background-color: rgba(19, 0, 38, 0.8); backdrop-filter: blur(12px);
-            border: 1px solid rgba(255,255,255,0.05); border-radius: 2rem; padding: 20px; margin-bottom: 20px;
-        }
-        .btn {
-            background: linear-gradient(to right, #7c3aed, #c026d3); border: none; color: white;
-            padding: 16px; border-radius: 16px; font-weight: 900; text-transform: uppercase;
-            width: 100%; cursor: pointer; margin-top: 10px; box-shadow: 0 4px 15px rgba(124, 58, 237, 0.3);
-        }
-        .btn:active { transform: scale(0.95); }
-        .btn-ton {
-            background: #0098EA;
-            box-shadow: 0 0 15px rgba(0, 152, 234, 0.4);
-        }
-
-        /* Clicker */
-        .clicker-container {
-            position: relative; width: 260px; height: 260px; margin: 20px auto; display: flex; justify-content: center; align-items: center;
-        }
-        .clicker-btn {
-            width: 200px; height: 200px; border-radius: 50%;
-            background: radial-gradient(circle at center, #4c1d95, #0a0014);
-            border: 2px solid rgba(139,92,246,0.5); box-shadow: 0 0 50px rgba(139,92,246,0.3);
-            display: flex; justify-content: center; align-items: center; font-size: 60px; cursor: pointer; z-index: 10;
-        }
-        .clicker-btn:active { transform: scale(0.95); }
-
-        /* Tienda */
-        .shop-item {
-            background: #130026; padding: 15px; border-radius: 15px; margin-bottom: 10px;
-            border: 1px solid rgba(139,92,246,0.1); display: flex; justify-content: space-between; align-items: center;
-        }
-
-        /* Navegación */
-        .nav-dock {
-            position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
-            width: 90%; max-width: 350px; background: rgba(15, 5, 24, 0.95); backdrop-filter: blur(20px);
-            border: 1px solid rgba(139,92,246,0.2); border-radius: 40px; display: flex; justify-content: space-around; padding: 10px; z-index: 100;
-        }
-        .nav-item { background: none; border: none; color: #64748b; padding: 10px; display: flex; flex-direction: column; align-items: center; }
-        .nav-item.active { color: #e879f9; }
-        
-        /* Contenedor del Botón TON Connect */
-        #ton-connect-btn { width: 100%; display: flex; justify-content: center; margin-top: 15px; }
+        .card { background: rgba(19, 0, 38, 0.8); border: 1px solid rgba(255,255,255,0.1); border-radius: 20px; padding: 20px; margin-bottom: 15px; }
+        .btn { background: linear-gradient(90deg, #7c3aed, #db2777); border: none; color: white; padding: 15px; border-radius: 12px; width: 100%; font-weight: bold; margin-top: 10px; cursor: pointer; }
+        .btn-ton { background: #0098EA; }
+        .nav-dock { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: rgba(20,20,40,0.9); padding: 10px 30px; border-radius: 50px; display: flex; gap: 30px; border: 1px solid rgba(255,255,255,0.1); z-index: 100; }
+        .nav-item { color: #666; background: none; border: none; font-size: 24px; cursor: pointer; }
+        .nav-item.active { color: #d946ef; }
+        #coin-btn { width: 220px; height: 220px; background: radial-gradient(circle, #4c1d95, #000); border-radius: 50%; border: 4px solid #7c3aed; margin: 20px auto; display: flex; justify-content: center; align-items: center; font-size: 80px; box-shadow: 0 0 50px rgba(124, 58, 237, 0.5); }
+        #coin-btn:active { transform: scale(0.95); }
     </style>
 </head>
 <body>
 
     <div class="main-container">
         <div id="view-home">
-            <div class="text-center" style="margin-top: 10px;">
-                <h2 style="font-style: italic; font-weight: 900; margin: 0;">SATOSHI <span style="color: #facc15;">OD</span></h2>
-                <div style="font-size: 12px; color: #a78bfa; margin-top: 5px;">POTENCIA: <span id="total-rate">0</span> SATS/s</div>
-            </div>
-
-            <div class="card" style="margin-top: 20px;">
-                <div class="flex" style="justify-content: space-between; font-size: 10px; font-weight: 900; color: #cbd5e1; text-transform: uppercase;">
-                    <span>Almacenamiento</span>
-                    <span id="storage-text">0 / 1000</span>
+            <h2 style="text-align:center; margin:0;">SATOSHI <span style="color:#facc15">OD</span></h2>
+            <p style="text-align:center; font-size:12px; color:#aaa;">POTENCIA: <span id="rate">0</span> SATS/s</p>
+            
+            <div class="card">
+                <div style="display:flex; justify-content:space-between; font-size:12px; color:#ccc;">
+                    <span>ALMACÉN</span> <span id="storage-txt">0/1000</span>
                 </div>
-                <div style="width: 100%; height: 6px; background: rgba(0,0,0,0.4); border-radius: 10px; margin: 10px 0;">
-                    <div id="storage-bar" style="width: 0%; height: 100%; background: linear-gradient(to right, #06b6d4, #8b5cf6); border-radius: 10px;"></div>
-                </div>
-                <button onclick="claimAuto()" class="btn" style="padding: 10px; font-size: 12px; margin-top: 5px;">RECLAMAR</button>
+                <div style="background:#333; height:5px; margin:5px 0; border-radius:5px;"><div id="storage-bar" style="background:#06b6d4; width:0%; height:100%;"></div></div>
+                <button class="btn" onclick="claim()">RECLAMAR</button>
             </div>
 
-            <div class="text-center">
-                <div style="font-size: 3.5rem; font-weight: 900; margin: 10px 0; text-shadow: 0 0 20px rgba(255,255,255,0.3);" id="score">0</div>
-                <div style="font-size: 10px; font-weight: 900; color: #64748b; letter-spacing: 2px;">BALANCE TOTAL</div>
+            <div style="text-align:center; margin: 20px 0;">
+                <h1 id="score" style="font-size:50px; margin:0;">0</h1>
+                <small style="color:#666; font-weight:bold;">BALANCE TOTAL</small>
             </div>
 
-            <div class="clicker-container">
-                <div class="clicker-btn" id="coin-btn">₿</div>
-            </div>
-            <div class="text-center" style="font-size: 12px; color: #facc15;">⚡ <span id="energy">1000</span></div>
+            <div id="coin-btn">₿</div>
+            <p style="text-align:center; color:#facc15;">⚡ <span id="energy">1000</span></p>
         </div>
 
         <div id="view-mine" class="hidden">
-            <h2 class="text-center" style="font-style: italic;">HARDWARE</h2>
-            
-            <div style="margin-bottom: 20px;">
-                <div style="font-size: 10px; color: #0098EA; font-weight: 900; margin-bottom: 10px; letter-spacing: 1px;">MAQUINAS TON (PREMIUM)</div>
-                <div id="ton-machines-list"></div>
-            </div>
-
-            <div>
-                <div style="font-size: 10px; color: #a78bfa; font-weight: 900; margin-bottom: 10px; letter-spacing: 1px;">MEJORAS BÁSICAS (SATS)</div>
-                <div id="basic-machines-list"></div>
-            </div>
+            <h2 style="text-align:center;">HARDWARE</h2>
+            <div id="shop-list"></div>
         </div>
 
         <div id="view-wallet" class="hidden">
-            <div class="card" style="background: linear-gradient(135deg, #1e1b4b, #130026);">
-                <span style="font-size: 10px; color: rgba(255,255,255,0.5);">MI BILLETERA</span>
-                <h1 style="margin: 10px 0;" id="wallet-balance">0</h1>
-                <div style="font-size: 20px; color: #34d399; font-weight: bold; margin-top: 10px;" id="usdt-value">≈ $0.00</div>
-                
-                <div id="ton-connect-btn"></div>
-                <p id="wallet-status" style="font-size: 10px; text-align: center; margin-top: 10px; color: #64748b;">Conecta tu wallet para comprar máquinas Premium</p>
+            <div class="card" style="text-align:center;">
+                <h3>MI BILLETERA</h3>
+                <h1 id="wallet-score">0</h1>
+                <p style="color:#34d399;" id="usdt-val">≈ $0.00</p>
+                <div id="ton-connect" style="margin-top:20px; display:flex; justify-content:center;"></div>
             </div>
-            <button class="btn" onclick="saveGame(true)">💾 GUARDAR MANUALMENTE</button>
         </div>
     </div>
 
     <div class="nav-dock">
-        <button class="nav-item active" onclick="switchTab('home', this)"><i data-lucide="home" width="20"></i><span>BASE</span></button>
-        <button class="nav-item" onclick="switchTab('mine', this)"><i data-lucide="zap" width="20"></i><span>MINAR</span></button>
-        <button class="nav-item" onclick="switchTab('wallet', this)"><i data-lucide="wallet" width="20"></i><span>WALLET</span></button>
+        <button class="nav-item active" onclick="go('home', this)">🏠</button>
+        <button class="nav-item" onclick="go('mine', this)">⚡</button>
+        <button class="nav-item" onclick="go('wallet', this)">💎</button>
     </div>
 
     <script>
-        // --- CONFIGURACIÓN CRÍTICA ---
-        // 1. TU DIRECCIÓN DE BILLETERA (Donde recibirás los pagos)
+        // CONFIGURACIÓN CRÍTICA
+        // ¡ASEGÚRATE QUE ESTA URL COINCIDA CON TU NOMBRE DE REPO EN GITHUB!
+        // Basado en tu foto, tu repo es "MININGSATOSHIPRO"
+        const MANIFEST_URL = "https://Kevin7041.github.io/MININGSATOSHIPRO/tonconnect-manifest.json";
         const ADMIN_WALLET = "UQAhKfWAyGxvnqR1J7ZUaJWs5xTJVJ2uTAMxB_vH-sL4zMt1";
-        
-        // 2. URL DEL MANIFEST (Debes crear el archivo tonconnect-manifest.json en tu GitHub)
-        // Asegúrate de que esta URL sea correcta según tu usuario y repo de GitHub
-        const MANIFEST_URL = "https://kevin7041.github.io/miniapp/tonconnect-manifest.json";
 
-        // --- INICIALIZACIÓN ---
-        lucide.createIcons();
         const tg = window.Telegram.WebApp;
         tg.expand();
+        const connector = new TON_CONNECT_UI.TonConnectUI({ manifestUrl: MANIFEST_URL, buttonRootId: 'ton-connect' });
 
-        // Inicializar TON Connect UI
-        const tonConnectUI = new TON_CONNECT_UI.TonConnectUI({
-            manifestUrl: MANIFEST_URL,
-            buttonRootId: 'ton-connect-btn'
+        let data = { score: 0, energy: 1000, rate: 0, storage: 0 };
+        
+        // Cargar datos guardados
+        if(localStorage.getItem('save_v2')) data = JSON.parse(localStorage.getItem('save_v2'));
+
+        const machines = [
+            { id: 1, name: "Starter Rig", price: 1, rate: 100 },
+            { id: 2, name: "Turbo Miner", price: 5, rate: 600 },
+            { id: 3, name: "God Mode", price: 30, rate: 5000 }
+        ];
+
+        function save() { localStorage.setItem('save_v2', JSON.stringify(data)); }
+        setInterval(save, 5000);
+
+        function render() {
+            document.getElementById('score').innerText = Math.floor(data.score);
+            document.getElementById('wallet-score').innerText = Math.floor(data.score);
+            document.getElementById('usdt-val').innerText = "≈ $" + (data.score/1000000).toFixed(4);
+            document.getElementById('rate').innerText = data.rate;
+            document.getElementById('energy').innerText = data.energy;
+            document.getElementById('storage-txt').innerText = Math.floor(data.storage) + "/1000";
+            document.getElementById('storage-bar').style.width = (data.storage/10) + "%";
+        }
+
+        // Tienda
+        const shop = document.getElementById('shop-list');
+        machines.forEach(m => {
+            shop.innerHTML += `
+            <div class="card" style="display:flex; justify-content:space-between; align-items:center;">
+                <div><b>${m.name}</b><br><small style="color:#0098EA">+${m.rate} SATS/s</small></div>
+                <button class="btn btn-ton" style="width:auto; padding:10px 20px;" onclick="buy(${m.id})">${m.price} TON</button>
+            </div>`;
         });
 
-        // --- DATOS DEL JUEGO ---
-        let gameState = {
-            score: 0,
-            energy: 1000,
-            miningRate: 0,
-            autoBalance: 0,
-            machinesOwned: [] // Para rastrear qué compraron
-        };
-        const MAX_STORAGE = 1000;
-
-        // --- MÁQUINAS ---
-        const tonMachines = [
-            { id: 1, name: "Starter Rig", cost: 1, power: 100, desc: "Aceleración x10" },
-            { id: 2, name: "Turbo Miner", cost: 5, power: 600, desc: "Aceleración x60" },
-            { id: 3, name: "Quantum Core", cost: 10, power: 1500, desc: "Potencia Industrial" },
-            { id: 4, name: "GOD MODE", cost: 30, power: 5000, desc: "MÁXIMA POTENCIA" }
-        ];
-
-        const basicMachines = [
-            { id: 101, name: "CPU Básico", cost: 500, power: 1 },
-            { id: 102, name: "GPU Usada", cost: 2000, power: 5 }
-        ];
-
-        // --- SISTEMA DE GUARDADO (PERSISTENCIA) ---
-        function loadGame() {
-            const saved = localStorage.getItem('satoshi_save_v1');
-            if (saved) {
-                try {
-                    const parsed = JSON.parse(saved);
-                    gameState = { ...gameState, ...parsed };
-                    // Calcular fecha para offline earnings (opcional, básico por ahora)
-                } catch (e) { console.error("Error cargando partida", e); }
-            }
-            updateUI();
-        }
-
-        function saveGame(showMsg = false) {
-            localStorage.setItem('satoshi_save_v1', JSON.stringify(gameState));
-            if(showMsg) tg.showAlert("✅ Progreso guardado correctamente.");
-        }
-
-        // Guardado automático cada 5 segundos
-        setInterval(() => saveGame(), 5000);
-
-        // --- LÓGICA DE TIENDA Y PAGOS TON ---
-        async function buyWithTon(id) {
-            const machine = tonMachines.find(m => m.id === id);
-            
-            // Verificar si la wallet está conectada
-            if (!tonConnectUI.connected) {
-                return tg.showAlert("⚠️ Primero conecta tu Wallet en la pestaña 'Bóveda'.");
-            }
-
-            // Preparar transacción (Cantidad en Nanotons: 1 TON = 1,000,000,000)
-            const amountInNano = (machine.cost * 1000000000).toString();
-            
+        async function buy(id) {
+            if(!connector.connected) return tg.showAlert("❌ Conecta tu Wallet primero.");
+            const m = machines.find(x => x.id == id);
             const transaction = {
-                validUntil: Math.floor(Date.now() / 1000) + 600, // 10 min para pagar
-                messages: [
-                    {
-                        address: ADMIN_WALLET,
-                        amount: amountInNano,
-                    }
-                ]
+                validUntil: Math.floor(Date.now()/1000)+600,
+                messages: [{ address: ADMIN_WALLET, amount: (m.price*1000000000).toString() }]
             };
-
             try {
-                // Enviar transacción a la wallet conectada
-                const result = await tonConnectUI.sendTransaction(transaction);
-                
-                // Si llegamos aquí, la transacción se envió con éxito
-                gameState.miningRate += machine.power;
-                gameState.machinesOwned.push(machine.id);
-                saveGame();
-                
-                tg.showAlert(`✅ ¡PAGO EXITOSO!\n\nHas recibido: ${machine.name}\nPotencia aumentada: +${machine.power}`);
-                updateUI();
-                
-            } catch (e) {
-                console.error(e);
-                tg.showAlert("❌ Pago cancelado o fallido.");
-            }
+                await connector.sendTransaction(transaction);
+                data.rate += m.rate;
+                tg.showAlert("✅ ¡Compra exitosa! Potencia aumentada.");
+                save();
+            } catch(e) { tg.showAlert("❌ Pago cancelado."); }
         }
 
-        function buyBasic(id) {
-            const m = basicMachines.find(x => x.id === id);
-            if (gameState.score >= m.cost) {
-                gameState.score -= m.cost;
-                gameState.miningRate += m.power;
-                tg.showAlert(`¡Mejora comprada! +${m.power} SATS/s`);
-                updateUI();
-            } else {
-                tg.showAlert("Saldo insuficiente.");
-            }
-        }
-
-        // --- UI RENDER ---
-        function renderShop() {
-            const tonList = document.getElementById('ton-machines-list');
-            const basicList = document.getElementById('basic-machines-list');
-
-            tonList.innerHTML = tonMachines.map(m => `
-                <div class="shop-item" style="border: 1px solid rgba(0, 152, 234, 0.3); background: rgba(0, 152, 234, 0.05);">
-                    <div>
-                        <div style="font-weight:900; font-size:14px;">${m.name}</div>
-                        <div style="font-size:10px; color:#0098EA;">+${m.power} SATS/s</div>
-                        <div style="font-size:9px; color:#64748b;">${m.desc}</div>
-                    </div>
-                    <button class="btn btn-ton" style="width:auto; padding:8px 16px; margin:0;" onclick="buyWithTon(${m.id})">
-                        💎 ${m.cost} TON
-                    </button>
-                </div>
-            `).join('');
-
-            basicList.innerHTML = basicMachines.map(m => `
-                <div class="shop-item">
-                    <div>
-                        <div style="font-weight:900; font-size:14px;">${m.name}</div>
-                        <div style="font-size:10px; color:#a78bfa;">+${m.power} SATS/s</div>
-                    </div>
-                    <button class="btn" style="width:auto; padding:8px 16px; margin:0; font-size:10px; background:#2d1245;" onclick="buyBasic(${m.id})">
-                        ${m.cost} SATS
-                    </button>
-                </div>
-            `).join('');
-        }
-
-        function updateUI() {
-            document.getElementById('score').innerText = Math.floor(gameState.score).toLocaleString();
-            document.getElementById('wallet-balance').innerText = Math.floor(gameState.score).toLocaleString();
-            document.getElementById('usdt-value').innerText = `≈ $${(gameState.score / 1000000).toFixed(4)}`;
-            document.getElementById('energy').innerText = Math.floor(gameState.energy);
-            document.getElementById('total-rate').innerText = gameState.miningRate;
-            
-            document.getElementById('storage-text').innerText = `${Math.floor(gameState.autoBalance)} / ${MAX_STORAGE}`;
-            document.getElementById('storage-bar').style.width = `${(gameState.autoBalance/MAX_STORAGE)*100}%`;
-            
-            // Estado Wallet
-            const statusEl = document.getElementById('wallet-status');
-            if (tonConnectUI.connected) {
-                statusEl.innerText = "✅ Billetera Conectada";
-                statusEl.style.color = "#4ade80";
-            } else {
-                statusEl.innerText = "Conecta tu wallet para comprar máquinas Premium";
-                statusEl.style.color = "#64748b";
-            }
-        }
-
-        // --- BUCLES ---
+        // Clicker & Bucles
+        document.getElementById('coin-btn').onclick = () => {
+            if(data.energy > 0) { data.score++; data.energy--; render(); if(navigator.vibrate) navigator.vibrate(10); }
+        };
+        
+        function claim() { data.score += data.storage; data.storage = 0; render(); }
+        
         setInterval(() => {
-            if (gameState.miningRate > 0) gameState.score += gameState.miningRate;
-            if (gameState.autoBalance < MAX_STORAGE) gameState.autoBalance += 1;
-            if (gameState.energy < 1000) gameState.energy += 2;
-            updateUI();
+            if(data.rate > 0) data.score += data.rate;
+            if(data.storage < 1000) data.storage++;
+            if(data.energy < 1000) data.energy++;
+            render();
         }, 1000);
 
-        function claimAuto() {
-            if (gameState.autoBalance > 0) {
-                gameState.score += gameState.autoBalance;
-                gameState.autoBalance = 0;
-                tg.showAlert("Recolectado.");
-                updateUI();
-            }
-        }
-
-        document.getElementById('coin-btn').addEventListener('click', (e) => {
-            if(gameState.energy > 0) {
-                gameState.score++;
-                gameState.energy--;
-                if(navigator.vibrate) navigator.vibrate(10);
-                updateUI();
-                // Efecto flotante
-                const el = document.createElement('div');
-                el.innerText = "+1"; el.style.position='fixed'; el.style.left=e.clientX+'px'; el.style.top=e.clientY+'px'; el.style.color='white'; el.style.fontWeight='bold'; el.style.pointerEvents='none';
-                document.body.appendChild(el); setTimeout(()=>el.remove(), 500);
-            }
-        });
-
-        function switchTab(tab, btn) {
-            ['home', 'mine', 'wallet'].forEach(t => document.getElementById('view-'+t).classList.add('hidden'));
-            document.getElementById('view-'+tab).classList.remove('hidden');
-            document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
+        function go(view, btn) {
+            document.querySelectorAll('[id^=view-]').forEach(el => el.classList.add('hidden'));
+            document.getElementById('view-'+view).classList.remove('hidden');
+            document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
             btn.classList.add('active');
         }
 
-        // Arrancar
-        loadGame(); // Cargar datos guardados
-        renderShop();
-        updateUI();
-
+        render();
     </script>
 </body>
 </html>
