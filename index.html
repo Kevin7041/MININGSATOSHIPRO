@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Satoshi Mining Ultimate</title>
+    <title>Satoshi Mining Ultimate V3</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <script src="https://unpkg.com/@tonconnect/ui@latest/dist/tonconnect-ui.min.js"></script>
@@ -185,7 +185,7 @@
         tg.expand();
         const connector = new TON_CONNECT_UI.TonConnectUI({ manifestUrl: MANIFEST_URL, buttonRootId: 'ton-connect' });
 
-        // Estado Inicial
+        // Estado Inicial (v8 para actualizar nuevos mineros)
         let data = { 
             score: 0, 
             energy: 1000, 
@@ -195,13 +195,16 @@
             claimedRefs: [],
             activeMiners: [] 
         };
-        if(localStorage.getItem('satoshi_v7')) data = JSON.parse(localStorage.getItem('satoshi_v7'));
+        if(localStorage.getItem('satoshi_v8')) data = JSON.parse(localStorage.getItem('satoshi_v8'));
 
         // --- MÁQUINAS (Con Duración) ---
         const tonMachines = [ 
             { id: 1, name: "Starter Rig", price: 1, rate: 100, hours: 24 }, 
-            { id: 2, name: "Turbo Miner", price: 5, rate: 600, hours: 48 } 
+            { id: 2, name: "Turbo Miner", price: 5, rate: 600, hours: 48 },
+            { id: 3, name: "Quantum Core", price: 10, rate: 1500, hours: 72 }, 
+            { id: 4, name: "GOD MODE", price: 30, rate: 5500, hours: 72 } 
         ];
+        
         const usdtMachines = [ 
             { id: 101, name: "USDT Basic", price: 5, rate: 700, hours: 48 }, 
             { id: 102, name: "USDT Pro", price: 20, rate: 3000, hours: 72 }, 
@@ -210,7 +213,7 @@
 
         let pendingMachine = null;
 
-        function save() { localStorage.setItem('satoshi_v7', JSON.stringify(data)); }
+        function save() { localStorage.setItem('satoshi_v8', JSON.stringify(data)); }
         
         // --- LOOP PRINCIPAL ---
         setInterval(() => {
@@ -329,7 +332,7 @@
         // Render Tiendas
         const tShop = document.getElementById('shop-ton-list');
         tonMachines.forEach(m => {
-            const timeClass = m.hours == 24 ? 'time-24' : 'time-48';
+            const timeClass = m.hours == 24 ? 'time-24' : m.hours == 48 ? 'time-48' : 'time-72';
             tShop.innerHTML += `<div class="card" style="display:flex; justify-content:space-between; align-items:center; padding:15px;"><div><b>${m.name}</b><span class="badge-time ${timeClass}">${m.hours}H</span><br><small style="color:var(--ton-blue)">+${m.rate} SATS/s</small></div><button class="btn btn-ton" style="width:auto; padding:8px 15px;" onclick="buyTon(${m.id})">💎 ${m.price} TON</button></div>`;
         });
         const uShop = document.getElementById('shop-usdt-list');
