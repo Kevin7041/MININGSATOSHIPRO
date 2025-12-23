@@ -3,16 +3,18 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Satoshi Overdrive v2</title>
+    <title>Satoshi Overdrive Pro</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://unpkg.com/@tonconnect/ui@latest/dist/tonconnect-ui.min.js"></script>
+
     <style>
-        /* --- ESTILOS GENERALES --- */
+        /* --- ESTILOS VISUALES --- */
         :root {
             --bg-dark: #05000a;
             --card-bg: #130026;
             --primary: #8b5cf6;
-            --ton-blue: #0098EA; /* Color oficial de TON */
+            --ton-blue: #0098EA;
         }
         body {
             background-color: var(--bg-dark);
@@ -27,32 +29,26 @@
         }
         .hidden { display: none !important; }
         .flex { display: flex; }
-        .items-center { align-items: center; }
-        .justify-between { justify-content: space-between; }
-        .justify-center { justify-content: center; }
-        .gap-2 { gap: 8px; }
         .w-full { width: 100%; }
         .text-center { text-align: center; }
 
-        /* --- COMPONENTES --- */
+        /* Tarjetas y Botones */
         .card {
-            background-color: rgba(19, 0, 38, 0.6); backdrop-filter: blur(12px);
+            background-color: rgba(19, 0, 38, 0.8); backdrop-filter: blur(12px);
             border: 1px solid rgba(255,255,255,0.05); border-radius: 2rem; padding: 20px; margin-bottom: 20px;
         }
         .btn {
             background: linear-gradient(to right, #7c3aed, #c026d3); border: none; color: white;
             padding: 16px; border-radius: 16px; font-weight: 900; text-transform: uppercase;
-            width: 100%; cursor: pointer; margin-top: 10px;
-        }
-        /* Botón estilo TON */
-        .btn-ton {
-            background: linear-gradient(to right, #0098EA, #0077b6);
-            box-shadow: 0 0 15px rgba(0, 152, 234, 0.4);
+            width: 100%; cursor: pointer; margin-top: 10px; box-shadow: 0 4px 15px rgba(124, 58, 237, 0.3);
         }
         .btn:active { transform: scale(0.95); }
+        .btn-ton {
+            background: #0098EA;
+            box-shadow: 0 0 15px rgba(0, 152, 234, 0.4);
+        }
 
-        /* --- VISTAS --- */
-        .score-display { font-size: 3.5rem; font-weight: 900; margin: 10px 0; text-shadow: 0 0 20px rgba(255,255,255,0.3); }
+        /* Clicker */
         .clicker-container {
             position: relative; width: 260px; height: 260px; margin: 20px auto; display: flex; justify-content: center; align-items: center;
         }
@@ -64,7 +60,13 @@
         }
         .clicker-btn:active { transform: scale(0.95); }
 
-        /* --- NAVIGATION --- */
+        /* Tienda */
+        .shop-item {
+            background: #130026; padding: 15px; border-radius: 15px; margin-bottom: 10px;
+            border: 1px solid rgba(139,92,246,0.1); display: flex; justify-content: space-between; align-items: center;
+        }
+
+        /* Navegación */
         .nav-dock {
             position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
             width: 90%; max-width: 350px; background: rgba(15, 5, 24, 0.95); backdrop-filter: blur(20px);
@@ -72,14 +74,9 @@
         }
         .nav-item { background: none; border: none; color: #64748b; padding: 10px; display: flex; flex-direction: column; align-items: center; }
         .nav-item.active { color: #e879f9; }
-        .nav-item span { font-size: 9px; font-weight: 900; margin-top: 4px; }
-
-        /* --- ITEMS DE TIENDA --- */
-        .shop-item {
-            background: #130026; padding: 15px; border-radius: 15px; margin-bottom: 10px;
-            border: 1px solid rgba(139,92,246,0.1); display: flex; justify-content: space-between; align-items: center;
-        }
-        .ton-item { border: 1px solid rgba(0, 152, 234, 0.3); background: rgba(0, 152, 234, 0.05); }
+        
+        /* Contenedor del Botón TON Connect */
+        #ton-connect-btn { width: 100%; display: flex; justify-content: center; margin-top: 15px; }
     </style>
 </head>
 <body>
@@ -88,22 +85,22 @@
         <div id="view-home">
             <div class="text-center" style="margin-top: 10px;">
                 <h2 style="font-style: italic; font-weight: 900; margin: 0;">SATOSHI <span style="color: #facc15;">OD</span></h2>
-                <div style="font-size: 12px; color: #a78bfa; margin-top: 5px;">POTENCIA TOTAL: <span id="total-rate">0</span> SATS/s</div>
+                <div style="font-size: 12px; color: #a78bfa; margin-top: 5px;">POTENCIA: <span id="total-rate">0</span> SATS/s</div>
             </div>
 
             <div class="card" style="margin-top: 20px;">
-                <div class="flex justify-between" style="font-size: 10px; font-weight: 900; color: #cbd5e1; text-transform: uppercase;">
+                <div class="flex" style="justify-content: space-between; font-size: 10px; font-weight: 900; color: #cbd5e1; text-transform: uppercase;">
                     <span>Almacenamiento</span>
                     <span id="storage-text">0 / 1000</span>
                 </div>
                 <div style="width: 100%; height: 6px; background: rgba(0,0,0,0.4); border-radius: 10px; margin: 10px 0;">
                     <div id="storage-bar" style="width: 0%; height: 100%; background: linear-gradient(to right, #06b6d4, #8b5cf6); border-radius: 10px;"></div>
                 </div>
-                <button onclick="claimAuto()" class="btn" style="padding: 10px; font-size: 12px; margin-top: 5px;">RECLAMAR MINADO</button>
+                <button onclick="claimAuto()" class="btn" style="padding: 10px; font-size: 12px; margin-top: 5px;">RECLAMAR</button>
             </div>
 
             <div class="text-center">
-                <div class="score-display" id="score">0</div>
+                <div style="font-size: 3.5rem; font-weight: 900; margin: 10px 0; text-shadow: 0 0 20px rgba(255,255,255,0.3);" id="score">0</div>
                 <div style="font-size: 10px; font-weight: 900; color: #64748b; letter-spacing: 2px;">BALANCE TOTAL</div>
             </div>
 
@@ -117,12 +114,12 @@
             <h2 class="text-center" style="font-style: italic;">HARDWARE</h2>
             
             <div style="margin-bottom: 20px;">
-                <div style="font-size: 10px; color: #0098EA; font-weight: 900; margin-bottom: 10px; letter-spacing: 1px;">PREMIUM (PAGO EN TON)</div>
+                <div style="font-size: 10px; color: #0098EA; font-weight: 900; margin-bottom: 10px; letter-spacing: 1px;">MAQUINAS TON (PREMIUM)</div>
                 <div id="ton-machines-list"></div>
             </div>
 
             <div>
-                <div style="font-size: 10px; color: #a78bfa; font-weight: 900; margin-bottom: 10px; letter-spacing: 1px;">BÁSICO (PAGO EN SATS)</div>
+                <div style="font-size: 10px; color: #a78bfa; font-weight: 900; margin-bottom: 10px; letter-spacing: 1px;">MEJORAS BÁSICAS (SATS)</div>
                 <div id="basic-machines-list"></div>
             </div>
         </div>
@@ -132,28 +129,51 @@
                 <span style="font-size: 10px; color: rgba(255,255,255,0.5);">MI BILLETERA</span>
                 <h1 style="margin: 10px 0;" id="wallet-balance">0</h1>
                 <div style="font-size: 20px; color: #34d399; font-weight: bold; margin-top: 10px;" id="usdt-value">≈ $0.00</div>
+                
+                <div id="ton-connect-btn"></div>
+                <p id="wallet-status" style="font-size: 10px; text-align: center; margin-top: 10px; color: #64748b;">Conecta tu wallet para comprar máquinas Premium</p>
             </div>
-            <p class="text-center" style="font-size: 12px; color: #64748b;">Retiros habilitados próximamente en la Fase 2.</p>
+            <button class="btn" onclick="saveGame(true)">💾 GUARDAR MANUALMENTE</button>
         </div>
     </div>
 
     <div class="nav-dock">
-        <button class="nav-item active" onclick="switchTab('home', this)">
-            <i data-lucide="home" width="20"></i><span>BASE</span>
-        </button>
-        <button class="nav-item" onclick="switchTab('mine', this)">
-            <i data-lucide="zap" width="20"></i><span>MINAR</span>
-        </button>
-        <button class="nav-item" onclick="switchTab('wallet', this)">
-            <i data-lucide="wallet" width="20"></i><span>WALLET</span>
-        </button>
+        <button class="nav-item active" onclick="switchTab('home', this)"><i data-lucide="home" width="20"></i><span>BASE</span></button>
+        <button class="nav-item" onclick="switchTab('mine', this)"><i data-lucide="zap" width="20"></i><span>MINAR</span></button>
+        <button class="nav-item" onclick="switchTab('wallet', this)"><i data-lucide="wallet" width="20"></i><span>WALLET</span></button>
     </div>
 
     <script>
-        // CONFIGURACIÓN DE TU BILLETERA (DONDE RECIBES LOS TON)
-        const MY_WALLET = "UQAhKfWAyGxvnqR1J7ZUaJWs5xTJVJ2uTAMxB_vH-sL4zMt1";
+        // --- CONFIGURACIÓN CRÍTICA ---
+        // 1. TU DIRECCIÓN DE BILLETERA (Donde recibirás los pagos)
+        const ADMIN_WALLET = "UQAhKfWAyGxvnqR1J7ZUaJWs5xTJVJ2uTAMxB_vH-sL4zMt1";
+        
+        // 2. URL DEL MANIFEST (Debes crear el archivo tonconnect-manifest.json en tu GitHub)
+        // Asegúrate de que esta URL sea correcta según tu usuario y repo de GitHub
+        const MANIFEST_URL = "https://kevin7041.github.io/miniapp/tonconnect-manifest.json";
 
-        // CONFIGURACIÓN DE MÁQUINAS TON
+        // --- INICIALIZACIÓN ---
+        lucide.createIcons();
+        const tg = window.Telegram.WebApp;
+        tg.expand();
+
+        // Inicializar TON Connect UI
+        const tonConnectUI = new TON_CONNECT_UI.TonConnectUI({
+            manifestUrl: MANIFEST_URL,
+            buttonRootId: 'ton-connect-btn'
+        });
+
+        // --- DATOS DEL JUEGO ---
+        let gameState = {
+            score: 0,
+            energy: 1000,
+            miningRate: 0,
+            autoBalance: 0,
+            machinesOwned: [] // Para rastrear qué compraron
+        };
+        const MAX_STORAGE = 1000;
+
+        // --- MÁQUINAS ---
         const tonMachines = [
             { id: 1, name: "Starter Rig", cost: 1, power: 100, desc: "Aceleración x10" },
             { id: 2, name: "Turbo Miner", cost: 5, power: 600, desc: "Aceleración x60" },
@@ -161,42 +181,91 @@
             { id: 4, name: "GOD MODE", cost: 30, power: 5000, desc: "MÁXIMA POTENCIA" }
         ];
 
-        // CONFIGURACIÓN MÁQUINAS BÁSICAS (SATS)
         const basicMachines = [
             { id: 101, name: "CPU Básico", cost: 500, power: 1 },
             { id: 102, name: "GPU Usada", cost: 2000, power: 5 }
         ];
 
-        // VARIABLES DE ESTADO
-        let score = 0;
-        let energy = 1000;
-        let miningRate = 0; // SATS por segundo
-        let autoBalance = 0;
-        const MAX_STORAGE = 1000;
+        // --- SISTEMA DE GUARDADO (PERSISTENCIA) ---
+        function loadGame() {
+            const saved = localStorage.getItem('satoshi_save_v1');
+            if (saved) {
+                try {
+                    const parsed = JSON.parse(saved);
+                    gameState = { ...gameState, ...parsed };
+                    // Calcular fecha para offline earnings (opcional, básico por ahora)
+                } catch (e) { console.error("Error cargando partida", e); }
+            }
+            updateUI();
+        }
 
-        // INICIALIZAR
-        lucide.createIcons();
-        const tg = window.Telegram.WebApp;
-        tg.expand();
+        function saveGame(showMsg = false) {
+            localStorage.setItem('satoshi_save_v1', JSON.stringify(gameState));
+            if(showMsg) tg.showAlert("✅ Progreso guardado correctamente.");
+        }
 
-        // ELEMENTOS DOM
-        const els = {
-            score: document.getElementById('score'),
-            walletScore: document.getElementById('wallet-balance'),
-            usdt: document.getElementById('usdt-value'),
-            energy: document.getElementById('energy'),
-            rate: document.getElementById('total-rate'),
-            storageBar: document.getElementById('storage-bar'),
-            storageText: document.getElementById('storage-text'),
-            tonList: document.getElementById('ton-machines-list'),
-            basicList: document.getElementById('basic-machines-list')
-        };
+        // Guardado automático cada 5 segundos
+        setInterval(() => saveGame(), 5000);
 
-        // RENDERIZAR TIENDA
+        // --- LÓGICA DE TIENDA Y PAGOS TON ---
+        async function buyWithTon(id) {
+            const machine = tonMachines.find(m => m.id === id);
+            
+            // Verificar si la wallet está conectada
+            if (!tonConnectUI.connected) {
+                return tg.showAlert("⚠️ Primero conecta tu Wallet en la pestaña 'Bóveda'.");
+            }
+
+            // Preparar transacción (Cantidad en Nanotons: 1 TON = 1,000,000,000)
+            const amountInNano = (machine.cost * 1000000000).toString();
+            
+            const transaction = {
+                validUntil: Math.floor(Date.now() / 1000) + 600, // 10 min para pagar
+                messages: [
+                    {
+                        address: ADMIN_WALLET,
+                        amount: amountInNano,
+                    }
+                ]
+            };
+
+            try {
+                // Enviar transacción a la wallet conectada
+                const result = await tonConnectUI.sendTransaction(transaction);
+                
+                // Si llegamos aquí, la transacción se envió con éxito
+                gameState.miningRate += machine.power;
+                gameState.machinesOwned.push(machine.id);
+                saveGame();
+                
+                tg.showAlert(`✅ ¡PAGO EXITOSO!\n\nHas recibido: ${machine.name}\nPotencia aumentada: +${machine.power}`);
+                updateUI();
+                
+            } catch (e) {
+                console.error(e);
+                tg.showAlert("❌ Pago cancelado o fallido.");
+            }
+        }
+
+        function buyBasic(id) {
+            const m = basicMachines.find(x => x.id === id);
+            if (gameState.score >= m.cost) {
+                gameState.score -= m.cost;
+                gameState.miningRate += m.power;
+                tg.showAlert(`¡Mejora comprada! +${m.power} SATS/s`);
+                updateUI();
+            } else {
+                tg.showAlert("Saldo insuficiente.");
+            }
+        }
+
+        // --- UI RENDER ---
         function renderShop() {
-            // Render TON Machines
-            els.tonList.innerHTML = tonMachines.map(m => `
-                <div class="shop-item ton-item">
+            const tonList = document.getElementById('ton-machines-list');
+            const basicList = document.getElementById('basic-machines-list');
+
+            tonList.innerHTML = tonMachines.map(m => `
+                <div class="shop-item" style="border: 1px solid rgba(0, 152, 234, 0.3); background: rgba(0, 152, 234, 0.05);">
                     <div>
                         <div style="font-weight:900; font-size:14px;">${m.name}</div>
                         <div style="font-size:10px; color:#0098EA;">+${m.power} SATS/s</div>
@@ -208,8 +277,7 @@
                 </div>
             `).join('');
 
-            // Render Basic Machines
-            els.basicList.innerHTML = basicMachines.map(m => `
+            basicList.innerHTML = basicMachines.map(m => `
                 <div class="shop-item">
                     <div>
                         <div style="font-weight:900; font-size:14px;">${m.name}</div>
@@ -222,111 +290,57 @@
             `).join('');
         }
 
-        // LÓGICA DE COMPRA TON
-        function buyWithTon(id) {
-            const machine = tonMachines.find(m => m.id === id);
+        function updateUI() {
+            document.getElementById('score').innerText = Math.floor(gameState.score).toLocaleString();
+            document.getElementById('wallet-balance').innerText = Math.floor(gameState.score).toLocaleString();
+            document.getElementById('usdt-value').innerText = `≈ $${(gameState.score / 1000000).toFixed(4)}`;
+            document.getElementById('energy').innerText = Math.floor(gameState.energy);
+            document.getElementById('total-rate').innerText = gameState.miningRate;
             
-            // Convertir TON a NanoTON (1 TON = 1,000,000,000)
-            const nanoAmount = machine.cost * 1000000000;
-            const text = `Pago_${machine.name}_User_${tg.initDataUnsafe?.user?.id || 'Anon'}`;
+            document.getElementById('storage-text').innerText = `${Math.floor(gameState.autoBalance)} / ${MAX_STORAGE}`;
+            document.getElementById('storage-bar').style.width = `${(gameState.autoBalance/MAX_STORAGE)*100}%`;
             
-            // Crear Link de Pago Universal (Abre Tonkeeper o Wallet)
-            const paymentUrl = `https://app.tonkeeper.com/transfer/${MY_WALLET}?amount=${nanoAmount}&text=${text}`;
-
-            // Abrir pago
-            tg.openLink(paymentUrl);
-
-            // SIMULACIÓN DE VERIFICACIÓN (Ya que no tenemos backend)
-            tg.showConfirm(`¿Confirmas que has realizado el pago de ${machine.cost} TON en tu billetera?`, (confirmed) => {
-                if (confirmed) {
-                    // Esperar un poco para dar sensación de "Verificando blockchain..."
-                    tg.showAlert("Verificando transacción en la blockchain...");
-                    setTimeout(() => {
-                        miningRate += machine.power;
-                        updateUI();
-                        tg.showAlert(`✅ ¡PAGO CONFIRMADO! \n\nHas adquirido ${machine.name}. \nTu potencia aumentó +${machine.power} SATS/s.`);
-                    }, 2000);
-                }
-            });
-        }
-
-        // LÓGICA COMPRA BÁSICA
-        function buyBasic(id) {
-            const m = basicMachines.find(x => x.id === id);
-            if (score >= m.cost) {
-                score -= m.cost;
-                miningRate += m.power;
-                tg.showAlert(`¡Mejora comprada! +${m.power} SATS/s`);
-                updateUI();
+            // Estado Wallet
+            const statusEl = document.getElementById('wallet-status');
+            if (tonConnectUI.connected) {
+                statusEl.innerText = "✅ Billetera Conectada";
+                statusEl.style.color = "#4ade80";
             } else {
-                tg.showAlert("Saldo insuficiente.");
+                statusEl.innerText = "Conecta tu wallet para comprar máquinas Premium";
+                statusEl.style.color = "#64748b";
             }
         }
 
-        // BUCLE PRINCIPAL (Se ejecuta cada segundo)
+        // --- BUCLES ---
         setInterval(() => {
-            // Minería Pasiva (Rate)
-            if (miningRate > 0) {
-                score += miningRate;
-            }
-            
-            // Auto Collector (Llenado lento base)
-            if (autoBalance < MAX_STORAGE) {
-                autoBalance += 1; 
-            }
-            
-            // Regenerar Energía Clicker
-            if (energy < 1000) energy += 2;
-
+            if (gameState.miningRate > 0) gameState.score += gameState.miningRate;
+            if (gameState.autoBalance < MAX_STORAGE) gameState.autoBalance += 1;
+            if (gameState.energy < 1000) gameState.energy += 2;
             updateUI();
         }, 1000);
 
-        // ACTUALIZAR INTERFAZ
-        function updateUI() {
-            els.score.innerText = Math.floor(score).toLocaleString();
-            els.walletScore.innerText = Math.floor(score).toLocaleString();
-            els.usdt.innerText = `≈ $${(score / 1000000).toFixed(4)}`; // Precio simulado
-            els.energy.innerText = energy;
-            els.rate.innerText = miningRate;
-            
-            // Barra de almacenamiento
-            els.storageText.innerText = `${Math.floor(autoBalance)} / ${MAX_STORAGE}`;
-            els.storageBar.style.width = `${(autoBalance/MAX_STORAGE)*100}%`;
-        }
-
-        // CLAIM DEL AUTO COLLECTOR
         function claimAuto() {
-            if (autoBalance > 0) {
-                score += autoBalance;
-                tg.showAlert(`Recogiste ${Math.floor(autoBalance)} SATS`);
-                autoBalance = 0;
+            if (gameState.autoBalance > 0) {
+                gameState.score += gameState.autoBalance;
+                gameState.autoBalance = 0;
+                tg.showAlert("Recolectado.");
                 updateUI();
             }
         }
 
-        // CLICKER
         document.getElementById('coin-btn').addEventListener('click', (e) => {
-            if(energy > 0) {
-                score++;
-                energy--;
+            if(gameState.energy > 0) {
+                gameState.score++;
+                gameState.energy--;
                 if(navigator.vibrate) navigator.vibrate(10);
                 updateUI();
-                
-                // Efecto visual simple
+                // Efecto flotante
                 const el = document.createElement('div');
-                el.innerText = "+1";
-                el.style.position = 'fixed';
-                el.style.left = e.clientX + 'px';
-                el.style.top = e.clientY + 'px';
-                el.style.color = 'white';
-                el.style.pointerEvents = 'none';
-                el.style.fontWeight = 'bold';
-                document.body.appendChild(el);
-                setTimeout(() => el.remove(), 500);
+                el.innerText = "+1"; el.style.position='fixed'; el.style.left=e.clientX+'px'; el.style.top=e.clientY+'px'; el.style.color='white'; el.style.fontWeight='bold'; el.style.pointerEvents='none';
+                document.body.appendChild(el); setTimeout(()=>el.remove(), 500);
             }
         });
 
-        // CAMBIAR PESTAÑAS
         function switchTab(tab, btn) {
             ['home', 'mine', 'wallet'].forEach(t => document.getElementById('view-'+t).classList.add('hidden'));
             document.getElementById('view-'+tab).classList.remove('hidden');
@@ -334,7 +348,8 @@
             btn.classList.add('active');
         }
 
-        // INICIAR
+        // Arrancar
+        loadGame(); // Cargar datos guardados
         renderShop();
         updateUI();
 
