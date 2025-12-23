@@ -3,26 +3,30 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Satoshi Mining Pro</title>
+    <title>Satoshi Mining Ultimate</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <script src="https://unpkg.com/@tonconnect/ui@latest/dist/tonconnect-ui.min.js"></script>
 
     <style>
-        :root { --bg-dark: #05000a; --ton-blue: #0098EA; --success: #4ade80; --locked: #ef4444; }
+        :root { --bg-dark: #05000a; --ton-blue: #0098EA; --usdt-green: #26A17B; --success: #4ade80; --locked: #ef4444; --gold: #facc15; }
         body { background-color: var(--bg-dark); color: white; font-family: sans-serif; margin: 0; padding: 0; user-select: none; }
         .main-container { padding: 20px 20px 100px 20px; height: 100vh; overflow-y: auto; box-sizing: border-box; }
         .hidden { display: none !important; }
         
         /* Tarjetas */
-        .card { background: rgba(19, 0, 38, 0.8); border: 1px solid rgba(255,255,255,0.1); border-radius: 20px; padding: 20px; margin-bottom: 15px; }
+        .card { background: rgba(19, 0, 38, 0.9); border: 1px solid rgba(255,255,255,0.1); border-radius: 20px; padding: 20px; margin-bottom: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.3); }
         
         /* Botones */
-        .btn { background: linear-gradient(90deg, #7c3aed, #db2777); border: none; color: white; padding: 15px; border-radius: 12px; width: 100%; font-weight: bold; margin-top: 10px; cursor: pointer; transition: 0.2s; }
+        .btn { background: linear-gradient(90deg, #7c3aed, #db2777); border: none; color: white; padding: 15px; border-radius: 12px; width: 100%; font-weight: bold; margin-top: 10px; cursor: pointer; transition: 0.2s; font-size: 14px; }
         .btn:active { transform: scale(0.95); }
-        .btn-ton { background: #0098EA; }
-        .btn-disabled { background: #333; color: #666; cursor: not-allowed; }
+        .btn-ton { background: var(--ton-blue); box-shadow: 0 0 15px rgba(0, 152, 234, 0.3); }
+        .btn-usdt { background: var(--usdt-green); box-shadow: 0 0 15px rgba(38, 161, 123, 0.3); }
+        .btn-claim { background: var(--gold); color: black; animation: pulse 2s infinite; }
+        .btn-disabled { background: #333; color: #666; cursor: not-allowed; animation: none; }
         
+        @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(250, 204, 21, 0.7); } 70% { box-shadow: 0 0 0 10px rgba(250, 204, 21, 0); } 100% { box-shadow: 0 0 0 0 rgba(250, 204, 21, 0); } }
+
         /* Navegación */
         .nav-dock { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: rgba(20,20,40,0.95); padding: 10px 20px; border-radius: 50px; display: flex; gap: 25px; border: 1px solid rgba(255,255,255,0.1); z-index: 100; box-shadow: 0 5px 20px rgba(0,0,0,0.5); }
         .nav-item { color: #666; background: none; border: none; font-size: 24px; cursor: pointer; display: flex; flex-direction: column; align-items: center; }
@@ -33,24 +37,26 @@
         #coin-btn { width: 220px; height: 220px; background: radial-gradient(circle, #4c1d95, #000); border-radius: 50%; border: 4px solid #7c3aed; margin: 20px auto; display: flex; justify-content: center; align-items: center; font-size: 80px; box-shadow: 0 0 50px rgba(124, 58, 237, 0.5); position: relative; }
         #coin-btn:active { transform: scale(0.95); }
 
-        /* Barras de Progreso (Retiro) */
+        /* Recompensas */
+        .reward-item { display: flex; justify-content: space-between; align-items: center; padding: 10px; border-bottom: 1px solid rgba(255,255,255,0.1); }
+        .reward-item:last-child { border-bottom: none; }
+
+        /* Barras */
         .progress-bg { width: 100%; background: #333; height: 8px; border-radius: 5px; margin-top: 5px; overflow: hidden; }
-        .progress-fill { height: 100%; transition: width 0.5s; }
-        .req-text { font-size: 10px; display: flex; justify-content: space-between; margin-top: 10px; text-transform: uppercase; font-weight: bold; }
     </style>
 </head>
 <body>
 
     <div class="main-container">
         <div id="view-home">
-            <h2 style="text-align:center; margin:0;">SATOSHI <span style="color:#facc15">PRO</span></h2>
+            <h2 style="text-align:center; margin:0;">SATOSHI <span style="color:#facc15">ULTIMATE</span></h2>
             <p style="text-align:center; font-size:12px; color:#aaa;">POTENCIA: <span id="rate">0</span> SATS/s</p>
             
             <div class="card">
                 <div style="display:flex; justify-content:space-between; font-size:12px; color:#ccc;">
                     <span>ALMACÉN</span> <span id="storage-txt">0/1000</span>
                 </div>
-                <div class="progress-bg"><div id="storage-bar" class="progress-fill" style="background:#06b6d4; width:0%;"></div></div>
+                <div class="progress-bg"><div id="storage-bar" style="background:#06b6d4; width:0%; height:100%;"></div></div>
                 <button class="btn" onclick="claim()">RECLAMAR</button>
             </div>
 
@@ -64,20 +70,30 @@
         </div>
 
         <div id="view-mine" class="hidden">
-            <h2 style="text-align:center;">HARDWARE</h2>
-            <div id="shop-list"></div>
+            <h2 style="text-align:center;">HARDWARE STORE</h2>
+            
+            <h4 style="color: var(--ton-blue); margin-bottom: 5px;">💎 TON MACHINES (AUTO)</h4>
+            <div id="shop-ton-list"></div>
+
+            <hr style="border:0; border-top:1px dashed #333; margin: 20px 0;">
+
+            <h4 style="color: var(--usdt-green); margin-bottom: 5px;">💵 USDT MINERS (MANUAL)</h4>
+            <div id="shop-usdt-list"></div>
         </div>
 
         <div id="view-friends" class="hidden">
-            <h2 style="text-align:center;">CYBER SQUAD</h2>
+            <h2 style="text-align:center;">SQUAD REWARDS</h2>
             <div class="card" style="text-align:center;">
                 <h1 id="friends-count" style="font-size: 50px; margin: 10px 0; color: #d946ef;">0</h1>
                 <p style="font-size: 10px; font-weight: bold; letter-spacing: 2px;">AMIGOS RECLUTADOS</p>
-                <hr style="border: 0; border-top: 1px solid #333; margin: 20px 0;">
-                <p style="font-size: 12px; color: #aaa;">Invita amigos para desbloquear retiros. Necesitas 20 amigos.</p>
-                <button class="btn" onclick="inviteFriend()">INVITAR AMIGOS</button>
-                
-                <button class="btn" style="background: #333; font-size: 10px; margin-top: 20px;" onclick="simulateReferral()">🛠️ SIMULAR NUEVO AMIGO (TEST)</button>
+                <button class="btn" onclick="inviteFriend()">🔗 INVITAR AMIGOS</button>
+                <button class="btn" style="background: #333; font-size: 10px; margin-top: 10px;" onclick="simulateReferral()">🛠️ SIMULAR AMIGO (TEST)</button>
+            </div>
+
+            <div class="card">
+                <h4 style="margin: 0 0 15px 0; color: var(--gold);">🏆 RECOMPENSAS (1000 SATS)</h4>
+                <div id="referral-list" style="max-height: 300px; overflow-y: auto;">
+                    </div>
             </div>
         </div>
 
@@ -90,19 +106,21 @@
             </div>
 
             <div class="card">
-                <h4 style="margin: 0 0 15px 0; font-style: italic;">REQUISITOS DE RETIRO</h4>
+                <h4 style="margin: 0 0 15px 0;">REQUISITOS DE RETIRO</h4>
                 
-                <div class="req-text">
-                    <span>Saldo (Min 500k)</span>
-                    <span id="req-score-txt" style="color:#ef4444">0 / 500,000</span>
+                <div style="margin-bottom: 10px;">
+                    <div style="display:flex; justify-content:space-between; font-size:10px;">
+                        <span>Saldo (Min 500k)</span> <span id="req-score-txt" style="color:#ef4444">0/500k</span>
+                    </div>
+                    <div class="progress-bg"><div id="req-score-bar" style="background:#ef4444; width:0%; height:100%;"></div></div>
                 </div>
-                <div class="progress-bg"><div id="req-score-bar" class="progress-fill" style="background:#ef4444; width:0%;"></div></div>
 
-                <div class="req-text">
-                    <span>Amigos (Min 20)</span>
-                    <span id="req-friends-txt" style="color:#ef4444">0 / 20</span>
+                <div>
+                    <div style="display:flex; justify-content:space-between; font-size:10px;">
+                        <span>Amigos (Min 20)</span> <span id="req-friends-txt" style="color:#ef4444">0/20</span>
+                    </div>
+                    <div class="progress-bg"><div id="req-friends-bar" style="background:#ef4444; width:0%; height:100%;"></div></div>
                 </div>
-                <div class="progress-bg"><div id="req-friends-bar" class="progress-fill" style="background:#ef4444; width:0%;"></div></div>
 
                 <button id="btn-withdraw" class="btn btn-disabled" style="margin-top: 20px;" onclick="tryWithdraw()">SOLICITAR RETIRO</button>
             </div>
@@ -117,15 +135,9 @@
     </div>
 
     <script>
-        // --- CONFIGURACIÓN CORRECTA ---
-        
-        // 1. URL DE MANIFIESTO
+        // --- CONFIGURACIÓN ---
         const MANIFEST_URL = "https://Kevin7041.github.io/MININGSATOSHIPRO/tonconnect-manifest.json";
-        
-        // 2. TU WALLET
         const ADMIN_WALLET = "UQAhKfWAyGxvnqR1J7ZUaJWs5xTJVJ2uTAMxB_vH-sL4zMt1";
-        
-        // 3. TU USUARIO DE BOT REAL
         const BOT_USERNAME = "miningsatoshipro_bot"; 
 
         const tg = window.Telegram.WebApp;
@@ -133,24 +145,36 @@
         const connector = new TON_CONNECT_UI.TonConnectUI({ manifestUrl: MANIFEST_URL, buttonRootId: 'ton-connect' });
 
         // Estado Inicial
-        let data = { score: 0, energy: 1000, rate: 0, storage: 0, friends: 0 };
+        let data = { 
+            score: 0, 
+            energy: 1000, 
+            rate: 0, 
+            storage: 0, 
+            friends: 0,
+            claimedRefs: [] // Array para guardar qué recompensas ya se cobraron
+        };
         
-        // Cargar partida guardada
-        if(localStorage.getItem('satoshi_v3')) data = JSON.parse(localStorage.getItem('satoshi_v3'));
+        // Cargar datos
+        if(localStorage.getItem('satoshi_v4')) data = JSON.parse(localStorage.getItem('satoshi_v4'));
 
-        // Configuración de Máquinas
-        const machines = [
+        // --- CATÁLOGO DE MÁQUINAS ---
+        const tonMachines = [
             { id: 1, name: "Starter Rig", price: 1, rate: 100 },
-            { id: 2, name: "Turbo Miner", price: 5, rate: 600 },
-            { id: 3, name: "God Mode", price: 30, rate: 5000 }
+            { id: 2, name: "Turbo Miner", price: 5, rate: 600 }
         ];
 
-        // Guardado Automático
-        function save() { localStorage.setItem('satoshi_v3', JSON.stringify(data)); }
+        const usdtMachines = [
+            { id: 101, name: "USDT Basic", price: 5, rate: 700 },
+            { id: 102, name: "USDT Pro", price: 20, rate: 3000 },
+            { id: 103, name: "USDT Titan", price: 100, rate: 15000 }
+        ];
+
+        function save() { localStorage.setItem('satoshi_v4', JSON.stringify(data)); }
         setInterval(save, 5000);
 
-        // --- UI ---
+        // --- RENDERIZADO ---
         function render() {
+            // Valores principales
             document.getElementById('score').innerText = Math.floor(data.score).toLocaleString();
             document.getElementById('wallet-score').innerText = Math.floor(data.score).toLocaleString();
             document.getElementById('usdt-val').innerText = "≈ $" + (data.score/1000000).toFixed(4);
@@ -160,52 +184,73 @@
             document.getElementById('friends-count').innerText = data.friends;
             document.getElementById('storage-bar').style.width = (data.storage/10) + "%";
 
-            // REQUISITOS DE RETIRO
+            // Requisitos de Retiro
             const MIN_SCORE = 500000;
             const MIN_FRIENDS = 20;
+            
+            // Barra Saldo
+            let sPct = Math.min(100, (data.score/MIN_SCORE)*100);
+            document.getElementById('req-score-bar').style.width = sPct + "%";
+            document.getElementById('req-score-txt').innerText = `${Math.floor(data.score/1000)}k/500k`;
+            if(data.score >= MIN_SCORE) { document.getElementById('req-score-bar').style.background = "#4ade80"; document.getElementById('req-score-txt').style.color = "#4ade80"; }
 
-            let scorePct = Math.min(100, (data.score / MIN_SCORE) * 100);
-            const scoreBar = document.getElementById('req-score-bar');
-            scoreBar.style.width = scorePct + "%";
-            document.getElementById('req-score-txt').innerText = `${Math.floor(data.score/1000)}k / 500k`;
-            if(data.score >= MIN_SCORE) { scoreBar.style.background = "#4ade80"; document.getElementById('req-score-txt').style.color = "#4ade80"; }
+            // Barra Amigos
+            let fPct = Math.min(100, (data.friends/MIN_FRIENDS)*100);
+            document.getElementById('req-friends-bar').style.width = fPct + "%";
+            document.getElementById('req-friends-txt').innerText = `${data.friends}/20`;
+            if(data.friends >= MIN_FRIENDS) { document.getElementById('req-friends-bar').style.background = "#4ade80"; document.getElementById('req-friends-txt').style.color = "#4ade80"; }
 
-            let friendPct = Math.min(100, (data.friends / MIN_FRIENDS) * 100);
-            const friendBar = document.getElementById('req-friends-bar');
-            friendBar.style.width = friendPct + "%";
-            document.getElementById('req-friends-txt').innerText = `${data.friends} / ${MIN_FRIENDS}`;
-            if(data.friends >= MIN_FRIENDS) { friendBar.style.background = "#4ade80"; document.getElementById('req-friends-txt').style.color = "#4ade80"; }
-
-            const btnWithdraw = document.getElementById('btn-withdraw');
+            // Botón Retiro
+            const btnW = document.getElementById('btn-withdraw');
             if (data.score >= MIN_SCORE && data.friends >= MIN_FRIENDS) {
-                btnWithdraw.classList.remove('btn-disabled');
-                btnWithdraw.innerText = "SOLICITAR RETIRO AHORA";
-                btnWithdraw.style.background = "#4ade80";
+                btnW.classList.remove('btn-disabled'); btnW.style.background = "#4ade80"; btnW.innerText = "SOLICITAR RETIRO";
             } else {
-                btnWithdraw.classList.add('btn-disabled');
-                btnWithdraw.innerText = "BLOQUEADO: CUMPLE REQUISITOS";
-                btnWithdraw.style.background = "#333";
+                btnW.classList.add('btn-disabled'); btnW.style.background = "#333"; btnW.innerText = "BLOQUEADO";
+            }
+
+            renderReferralList();
+        }
+
+        // --- SISTEMA DE RECOMPENSAS REFERIDOS ---
+        function renderReferralList() {
+            const list = document.getElementById('referral-list');
+            list.innerHTML = "";
+            // Generar metas de 5 en 5 hasta 100
+            for (let i = 5; i <= 100; i += 5) {
+                const claimed = data.claimedRefs.includes(i);
+                const unlocked = data.friends >= i;
+                
+                let btnHtml = '';
+                if (claimed) {
+                    btnHtml = `<span style="color:#4ade80; font-weight:bold; font-size:10px;">✅ RECLAMADO</span>`;
+                } else if (unlocked) {
+                    btnHtml = `<button class="btn btn-claim" style="width:auto; padding:5px 10px; margin:0;" onclick="claimRefReward(${i})">RECLAMAR</button>`;
+                } else {
+                    btnHtml = `<span style="color:#666; font-size:10px;">🔒 BLOQUEADO</span>`;
+                }
+
+                list.innerHTML += `
+                <div class="reward-item">
+                    <div style="font-size:12px;"><b>${i} Amigos</b></div>
+                    ${btnHtml}
+                </div>`;
             }
         }
 
-        // --- ACCIONES ---
-        document.getElementById('coin-btn').onclick = (e) => {
-            if(data.energy > 0) { 
-                data.score++; 
-                data.energy--; 
-                render(); 
-                if(navigator.vibrate) navigator.vibrate(10);
-                const el = document.createElement('div');
-                el.innerText = "+1"; el.style.position='fixed'; el.style.left=e.clientX+'px'; el.style.top=e.clientY+'px'; el.style.color='white'; el.style.pointerEvents='none'; el.style.fontWeight='bold';
-                document.body.appendChild(el); setTimeout(()=>el.remove(), 500);
+        function claimRefReward(milestone) {
+            if (!data.claimedRefs.includes(milestone) && data.friends >= milestone) {
+                data.score += 1000; // Premio de 1000 Satoshis
+                data.claimedRefs.push(milestone);
+                tg.showAlert(`🎉 ¡Felicidades! Ganaste 1,000 Satoshis por alcanzar ${milestone} amigos.`);
+                save();
+                render();
             }
-        };
+        }
 
-        function claim() { data.score += data.storage; data.storage = 0; render(); }
-
-        async function buy(id) {
+        // --- COMPRAS TON (AUTO) ---
+        async function buyTon(id) {
             if(!connector.connected) return tg.showAlert("❌ Conecta tu Wallet primero.");
-            const m = machines.find(x => x.id == id);
+            const m = tonMachines.find(x => x.id == id);
             const transaction = {
                 validUntil: Math.floor(Date.now()/1000)+600,
                 messages: [{ address: ADMIN_WALLET, amount: (m.price*1000000000).toString() }]
@@ -213,35 +258,55 @@
             try {
                 await connector.sendTransaction(transaction);
                 data.rate += m.rate;
-                tg.showAlert("✅ ¡Compra exitosa! Potencia aumentada.");
+                tg.showAlert(`✅ Compraste ${m.name}. Potencia +${m.rate}`);
                 save();
             } catch(e) { tg.showAlert("❌ Pago cancelado."); }
         }
 
+        // --- COMPRAS USDT (MANUAL) ---
+        function buyUsdt(id) {
+            const m = usdtMachines.find(x => x.id == id);
+            tg.showConfirm(`CONFIRMAR COMPRA: ${m.name}\n\n1. Envía ${m.price} USDT (TRC20 o TON) a:\n${ADMIN_WALLET}\n\n2. Una vez enviado, pulsa ACEPTAR para confirmar.`, (ok) => {
+                if(ok) {
+                    tg.showAlert("⏳ Verificando transacción...\nEsto puede tardar unos minutos. Si el pago es correcto, tu potencia se actualizará automáticamente.");
+                    // Simulación de éxito tras verificación (En app real requiere backend)
+                    setTimeout(() => {
+                        data.rate += m.rate;
+                        tg.showAlert(`✅ ¡PAGO VERIFICADO!\nHas recibido ${m.name}. Potencia +${m.rate}`);
+                        save();
+                        render();
+                    }, 3000);
+                }
+            });
+        }
+
+        // --- ACCIONES GENERALES ---
+        document.getElementById('coin-btn').onclick = (e) => {
+            if(data.energy > 0) { 
+                data.score++; data.energy--; render(); 
+                if(navigator.vibrate) navigator.vibrate(10);
+            }
+        };
+
+        function claim() { data.score += data.storage; data.storage = 0; render(); }
+
         function inviteFriend() {
             const userId = tg.initDataUnsafe?.user?.id || 'anon';
-            const inviteLink = `https://t.me/${BOT_USERNAME}/app?startapp=ref_${userId}`;
-            const shareUrl = `https://t.me/share/url?url=${encodeURIComponent(inviteLink)}&text=${encodeURIComponent("¡Mina Satoshis gratis conmigo! 🚀")}`;
-            tg.openTelegramLink(shareUrl);
+            const link = `https://t.me/${BOT_USERNAME}/app?startapp=ref_${userId}`;
+            tg.openTelegramLink(`https://t.me/share/url?url=${encodeURIComponent(link)}&text=${encodeURIComponent("¡Mina Crypto conmigo! 🚀")}`);
         }
 
         function simulateReferral() {
             data.friends++;
-            tg.showAlert(`🎉 ¡Nuevo amigo simulado! Total: ${data.friends}`);
+            tg.showAlert(`👨‍💻 Amigo Simulado. Total: ${data.friends}`);
             save();
             render();
         }
 
         function tryWithdraw() {
-            if (data.score < 500000 || data.friends < 20) {
-                tg.showAlert("⚠️ Aún no cumples los requisitos.");
-                return;
-            }
-            if(!connector.connected) {
-                tg.showAlert("⚠️ Conecta tu wallet para recibir los fondos.");
-                return;
-            }
-            tg.showAlert("✅ SOLICITUD ENVIADA.\nTu retiro está siendo procesado manualmente.");
+            if (data.score < 500000 || data.friends < 20) return tg.showAlert("⚠️ Requisitos incompletos.");
+            if(!connector.connected) return tg.showAlert("⚠️ Conecta tu wallet.");
+            tg.showAlert("✅ SOLICITUD ENVIADA AL ADMIN.");
         }
 
         function go(view, btn) {
@@ -251,15 +316,26 @@
             btn.classList.add('active');
         }
 
-        const shop = document.getElementById('shop-list');
-        machines.forEach(m => {
-            shop.innerHTML += `
-            <div class="card" style="display:flex; justify-content:space-between; align-items:center;">
-                <div><b>${m.name}</b><br><small style="color:#0098EA">+${m.rate} SATS/s</small></div>
-                <button class="btn btn-ton" style="width:auto; padding:10px 20px;" onclick="buy(${m.id})">${m.price} TON</button>
+        // Inicializar Tiendas
+        const tShop = document.getElementById('shop-ton-list');
+        tonMachines.forEach(m => {
+            tShop.innerHTML += `
+            <div class="card" style="display:flex; justify-content:space-between; align-items:center; padding:15px;">
+                <div><b>${m.name}</b><br><small style="color:var(--ton-blue)">+${m.rate} SATS/s</small></div>
+                <button class="btn btn-ton" style="width:auto; padding:8px 15px;" onclick="buyTon(${m.id})">💎 ${m.price} TON</button>
             </div>`;
         });
 
+        const uShop = document.getElementById('shop-usdt-list');
+        usdtMachines.forEach(m => {
+            uShop.innerHTML += `
+            <div class="card" style="display:flex; justify-content:space-between; align-items:center; padding:15px; border:1px solid var(--usdt-green);">
+                <div><b>${m.name}</b><br><small style="color:var(--usdt-green)">+${m.rate} SATS/s</small></div>
+                <button class="btn btn-usdt" style="width:auto; padding:8px 15px;" onclick="buyUsdt(${m.id})">💵 ${m.price} USDT</button>
+            </div>`;
+        });
+
+        // Loop
         setInterval(() => {
             if(data.rate > 0) data.score += data.rate;
             if(data.storage < 1000) data.storage++;
