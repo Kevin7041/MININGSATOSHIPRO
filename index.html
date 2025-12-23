@@ -3,21 +3,26 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Satoshi Mining Ultimate V9</title>
+    <title>Satoshi Mining Ultimate V11</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <script src="https://unpkg.com/@tonconnect/ui@latest/dist/tonconnect-ui.min.js"></script>
 
     <style>
+        /* COLORES Y VARIABLES */
         :root { --bg-dark: #05000a; --ton-blue: #0098EA; --usdt-green: #26A17B; --binance-yellow: #F3BA2F; --gold: #facc15; --danger: #ef4444; }
         body { background-color: var(--bg-dark); color: white; font-family: sans-serif; margin: 0; padding: 0; user-select: none; }
         .main-container { padding: 20px 20px 100px 20px; height: 100vh; overflow-y: auto; box-sizing: border-box; }
         .hidden { display: none !important; }
         
-        /* Tarjetas */
-        .card { background: rgba(19, 0, 38, 0.95); border: 1px solid rgba(255,255,255,0.08); border-radius: 20px; padding: 20px; margin-bottom: 15px; box-shadow: 0 8px 32px rgba(0,0,0,0.3); }
+        /* TARJETAS */
+        .card { background: rgba(19, 0, 38, 0.95); border: 1px solid rgba(255,255,255,0.08); border-radius: 20px; padding: 20px; margin-bottom: 15px; box-shadow: 0 8px 32px rgba(0,0,0,0.3); position: relative; overflow: hidden; }
         
-        /* Botones */
+        /* EFECTO DE ALERTA LLENO */
+        @keyframes flash-red { 0% { border-color: rgba(255,255,255,0.1); } 50% { border-color: #ef4444; box-shadow: 0 0 20px #ef4444; } 100% { border-color: rgba(255,255,255,0.1); } }
+        .card-full { animation: flash-red 1.5s infinite; }
+
+        /* BOTONES */
         .btn { background: linear-gradient(90deg, #7c3aed, #db2777); border: none; color: white; padding: 15px; border-radius: 12px; width: 100%; font-weight: bold; margin-top: 10px; cursor: pointer; transition: 0.2s; font-size: 14px; }
         .btn:active { transform: scale(0.95); }
         .btn-ton { background: var(--ton-blue); box-shadow: 0 0 15px rgba(0, 152, 234, 0.3); }
@@ -26,13 +31,13 @@
         .btn-claim { background: var(--gold); color: black; animation: pulse 2s infinite; }
         .btn-disabled { background: #333; color: #666; cursor: not-allowed; animation: none; }
         
-        /* Etiquetas */
+        /* BADGES */
         .badge-time { font-size: 10px; padding: 2px 6px; border-radius: 4px; background: #333; margin-left: 5px; }
         .time-24 { color: #ff9f43; border: 1px solid #ff9f43; }
         .time-48 { color: #54a0ff; border: 1px solid #54a0ff; }
         .time-72 { color: #1dd1a1; border: 1px solid #1dd1a1; }
 
-        /* Modal */
+        /* MODAL */
         .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 200; display: flex; justify-content: center; align-items: center; backdrop-filter: blur(5px); }
         .modal-content { background: #1a1a2e; padding: 25px; border-radius: 20px; width: 85%; max-width: 350px; text-align: center; border: 1px solid #444; position: relative; }
         .close-btn { position: absolute; top: 10px; right: 15px; font-size: 20px; cursor: pointer; color: #aaa; }
@@ -40,7 +45,7 @@
         
         @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(250, 204, 21, 0.7); } 70% { box-shadow: 0 0 0 10px rgba(250, 204, 21, 0); } 100% { box-shadow: 0 0 0 0 rgba(250, 204, 21, 0); } }
 
-        /* Navegación */
+        /* NAV DOCK */
         .nav-dock { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: rgba(20,20,40,0.95); padding: 10px 20px; border-radius: 50px; display: flex; gap: 25px; border: 1px solid rgba(255,255,255,0.1); z-index: 100; box-shadow: 0 5px 20px rgba(0,0,0,0.5); }
         .nav-item { color: #666; background: none; border: none; font-size: 24px; cursor: pointer; display: flex; flex-direction: column; align-items: center; }
         .nav-item span { font-size: 8px; font-weight: bold; margin-top: 4px; }
@@ -60,9 +65,9 @@
             <h2 style="text-align:center; margin:0;">SATOSHI <span style="color:#facc15">MINING</span></h2>
             <p style="text-align:center; font-size:12px; color:#aaa;">POTENCIA: <span id="rate">0</span> SATS/s</p>
             
-            <div class="card">
+            <div id="storage-card" class="card">
                 <div style="display:flex; justify-content:space-between; font-size:12px; color:#ccc;">
-                    <span>ALMACÉN OFFLINE (MAX 5000)</span> <span id="storage-txt">0/5000</span>
+                    <span id="storage-label">ALMACÉN OFFLINE</span> <span id="storage-txt">0/5000</span>
                 </div>
                 <div class="progress-bg"><div id="storage-bar" style="background:#06b6d4; width:0%; height:100%;"></div></div>
                 <button class="btn" onclick="claim()">RECLAMAR ACUMULADO</button>
@@ -173,33 +178,25 @@
     </div>
 
     <script>
-        // --- CONFIGURACIÓN DE WALLETS ---
+        // --- CONFIGURACIÓN ---
         const MANIFEST_URL = "https://Kevin7041.github.io/MININGSATOSHIPRO/tonconnect-manifest.json";
         const BOT_USERNAME = "miningsatoshipro_bot";
         const ADMIN_WALLET_TON = "UQAhKfWAyGxvnqR1J7ZUaJWs5xTJVJ2uTAMxB_vH-sL4zMt1";
         const USDT_TRC20_WALLET = "UQAhKfWAyGxvnqR1J7ZUaJWs5xTJVJ2uTAMxB_vH-sL4zMt1";
-        const MAX_STORAGE = 5000; // Capacidad del almacén aumentada
+        const MAX_STORAGE = 5000; 
 
         const tg = window.Telegram.WebApp;
         tg.expand();
         const connector = new TON_CONNECT_UI.TonConnectUI({ manifestUrl: MANIFEST_URL, buttonRootId: 'ton-connect' });
 
-        // --- CARGAR DATOS (V9) ---
+        // --- CARGAR DATOS (V11) ---
         let data = { 
-            score: 0, 
-            energy: 1000, 
-            rate: 0, 
-            storage: 0, 
-            friends: 0, 
-            claimedRefs: [],
-            activeMiners: [],
-            lastLogin: Date.now()
+            score: 0, energy: 1000, rate: 0, storage: 0, friends: 0, 
+            claimedRefs: [], activeMiners: [], lastLogin: Date.now()
         };
-        
-        if(localStorage.getItem('satoshi_v9')) {
-            data = JSON.parse(localStorage.getItem('satoshi_v9'));
-            // CÁLCULO OFFLINE AL ENTRAR
-            calculateOfflineEarnings();
+        if(localStorage.getItem('satoshi_v11')) {
+            data = JSON.parse(localStorage.getItem('satoshi_v11'));
+            calculateOfflineEarnings(); // Calcular al iniciar
         }
 
         // --- MÁQUINAS ---
@@ -216,40 +213,32 @@
         ];
 
         let pendingMachine = null;
+        let alertShown = false; // Para no spammear alertas en tiempo real
 
         function save() { 
             data.lastLogin = Date.now();
-            localStorage.setItem('satoshi_v9', JSON.stringify(data)); 
+            localStorage.setItem('satoshi_v11', JSON.stringify(data)); 
         }
         
-        // --- FUNCIÓN DE MINERÍA OFFLINE (EL TRUCO) ---
+        // --- CÁLCULO INTELIGENTE (SIMULA NOTIFICACIÓN) ---
         function calculateOfflineEarnings() {
             const now = Date.now();
             const last = data.lastLogin || now;
             const diffSeconds = Math.floor((now - last) / 1000);
 
-            if (diffSeconds > 10) { // Solo si estuvo fuera más de 10 seg
-                // 1. Llenar Almacén Base (1 sat/seg)
-                let collected = diffSeconds; // 1 segundo = 1 satoshi base
+            // 1. Calcular Llenado de Almacén
+            if (diffSeconds > 10) { 
+                let collected = diffSeconds;
                 let spaceLeft = MAX_STORAGE - data.storage;
-                let addedToStorage = Math.min(collected, spaceLeft);
+                let added = Math.min(collected, spaceLeft);
                 
-                if (addedToStorage > 0) {
-                    data.storage += addedToStorage;
-                }
+                if (added > 0) data.storage += added;
 
-                // 2. Ganancias de Mineros Activos
-                // Limpiar expirados primero
-                data.activeMiners = data.activeMiners.filter(m => m.expiresAt > now);
-                const currentRate = data.activeMiners.reduce((acc, m) => acc + m.rate, 0);
-                
-                const machineEarnings = currentRate * diffSeconds;
-                if (machineEarnings > 0) {
-                    data.score += machineEarnings;
-                }
-
-                if (addedToStorage > 0 || machineEarnings > 0) {
-                    tg.showAlert(`¡BIENVENIDO DE NUEVO! 👋\n\nEstuviste fuera: ${diffSeconds}s\n\n📦 Almacén: +${addedToStorage}\n⚡ Mineros: +${machineEarnings} SATS`);
+                // Si se llenó mientras estaba fuera
+                if (data.storage >= MAX_STORAGE) {
+                    tg.showAlert(`⚠️ ¡ALMACÉN LLENO! ⚠️\n\nTu minero se detuvo. Perdiste tiempo de producción.\n¡Entra cada 1.5 horas para no perder ganancias!`);
+                } else if (added > 100) {
+                    tg.showAlert(`👋 ¡BIENVENIDO!\n\nHas generado +${added} SATS en modo automático.`);
                 }
             }
             data.lastLogin = now;
@@ -258,21 +247,26 @@
         // --- LOOP PRINCIPAL ---
         setInterval(() => {
             const now = Date.now();
-            
-            // Limpiar Mineros Expirados
+            // Limpieza
             data.activeMiners = data.activeMiners.filter(m => m.expiresAt > now);
-            
-            // Calcular Rate Actual
-            const currentRate = data.activeMiners.reduce((acc, m) => acc + m.rate, 0);
-            data.rate = currentRate;
+            data.rate = data.activeMiners.reduce((acc, m) => acc + m.rate, 0);
 
-            // Minería Activa (Score directo)
+            // Minería
             if(data.rate > 0) data.score += data.rate;
             
-            // Minería Base (Almacén) - Se llena aunque no haya mineros
-            if(data.storage < MAX_STORAGE) data.storage++; // 1 por segundo
-            
-            // Energía Clicker
+            // Lógica de Almacén
+            if(data.storage < MAX_STORAGE) {
+                data.storage++;
+                alertShown = false; // Resetear alerta si baja de max
+            } else {
+                // ALERTA EN TIEMPO REAL SI SE LLENA CON LA APP ABIERTA
+                if (!alertShown) {
+                    tg.showAlert("⚠️ ¡ALMACÉN LLENO (5000)! RECLAMA AHORA.");
+                    if(navigator.vibrate) navigator.vibrate([200, 100, 200]);
+                    alertShown = true;
+                }
+            }
+
             if(data.energy < 1000) data.energy++;
             
             save();
@@ -290,20 +284,33 @@
             document.getElementById('storage-txt').innerText = Math.floor(data.storage) + "/" + MAX_STORAGE;
             document.getElementById('friends-count').innerText = data.friends;
             
+            // Barra y Efecto Visual de Lleno
             let stPct = (data.storage / MAX_STORAGE) * 100;
-            document.getElementById('storage-bar').style.width = stPct + "%";
-            // Cambiar color si está lleno
-            document.getElementById('storage-bar').style.background = stPct >= 100 ? "#ef4444" : "#06b6d4";
+            const sBar = document.getElementById('storage-bar');
+            sBar.style.width = stPct + "%";
+            
+            const sCard = document.getElementById('storage-card');
+            if (data.storage >= MAX_STORAGE) {
+                sBar.style.background = "#ef4444";
+                sCard.classList.add('card-full'); // Efecto parpadeo
+                document.getElementById('storage-label').innerText = "⚠️ ¡LLENO! RECLAMA YA";
+                document.getElementById('storage-label').style.color = "#ef4444";
+            } else {
+                sBar.style.background = "#06b6d4";
+                sCard.classList.remove('card-full');
+                document.getElementById('storage-label').innerText = "ALMACÉN OFFLINE";
+                document.getElementById('storage-label').style.color = "#ccc";
+            }
 
             // Requisitos
             const MIN_SCORE = 500000; const MIN_FRIENDS = 20;
-            let sPct = Math.min(100, (data.score/MIN_SCORE)*100);
-            document.getElementById('req-score-bar').style.width = sPct + "%";
+            let scPct = Math.min(100, (data.score/MIN_SCORE)*100);
+            document.getElementById('req-score-bar').style.width = scPct + "%";
             document.getElementById('req-score-txt').innerText = `${Math.floor(data.score/1000)}k/500k`;
             if(data.score >= MIN_SCORE) { document.getElementById('req-score-bar').style.background = "#4ade80"; document.getElementById('req-score-txt').style.color = "#4ade80"; }
 
-            let fPct = Math.min(100, (data.friends/MIN_FRIENDS)*100);
-            document.getElementById('req-friends-bar').style.width = fPct + "%";
+            let frPct = Math.min(100, (data.friends/MIN_FRIENDS)*100);
+            document.getElementById('req-friends-bar').style.width = frPct + "%";
             document.getElementById('req-friends-txt').innerText = `${data.friends}/20`;
             if(data.friends >= MIN_FRIENDS) { document.getElementById('req-friends-bar').style.background = "#4ade80"; document.getElementById('req-friends-txt').style.color = "#4ade80"; }
 
@@ -316,11 +323,11 @@
             renderReferralList();
         }
 
-        // --- FUNCIONES ---
-        function activateMiner(machine) {
-            const durationMs = machine.hours * 60 * 60 * 1000;
-            data.activeMiners.push({ id: machine.id, name: machine.name, rate: machine.rate, expiresAt: Date.now() + durationMs });
-            tg.showAlert(`✅ ${machine.name} ACTIVADO\nDuración: ${machine.hours} Horas`);
+        // --- FUNCIONES CORE ---
+        function activateMiner(m) {
+            const durationMs = m.hours * 60 * 60 * 1000;
+            data.activeMiners.push({ id: m.id, name: m.name, rate: m.rate, expiresAt: Date.now() + durationMs });
+            tg.showAlert(`✅ ${m.name} ACTIVADO\nDuración: ${m.hours} Horas`);
             save(); render();
         }
 
@@ -335,8 +342,8 @@
             pendingMachine = usdtMachines.find(x => x.id == id);
             document.getElementById('modal-price-ton').innerText = pendingMachine.price;
             document.getElementById('modal-price-trc').innerText = pendingMachine.price;
-            document.getElementById('addr-ton-disp').innerText = ADMIN_WALLET_TON.substring(0,10) + "..." + ADMIN_WALLET_TON.substring(ADMIN_WALLET_TON.length-4);
-            document.getElementById('addr-trc-disp').innerText = USDT_TRC20_WALLET.substring(0,10) + "..." + USDT_TRC20_WALLET.substring(USDT_TRC20_WALLET.length-4);
+            document.getElementById('addr-ton-disp').innerText = ADMIN_WALLET_TON.substring(0,10) + "...";
+            document.getElementById('addr-trc-disp').innerText = USDT_TRC20_WALLET.substring(0,10) + "...";
             document.getElementById('payment-modal').classList.remove('hidden');
         }
         function closeModal() { document.getElementById('payment-modal').classList.add('hidden'); pendingMachine = null; }
@@ -351,16 +358,11 @@
         function tryWithdraw() {
             if (data.score < 500000 || data.friends < 20) return tg.showAlert("⚠️ Requisitos incompletos.");
             if(!connector.connected) return tg.showAlert("⚠️ Conecta wallet.");
-            
             const fee = data.score * 0.30;
             const finalAmount = data.score - fee;
             const usdtEst = (finalAmount / 1000000).toFixed(2);
-
             tg.showConfirm(`CONFIRMAR RETIRO\n\nBalance: ${Math.floor(data.score)}\nComisión (30%): -${Math.floor(fee)}\n------------------\nRECIBIRÁS: ${Math.floor(finalAmount)} SATS\n(Aprox $${usdtEst} USDT)\n\nTiempo: 48 Horas`, (ok) => {
-                if(ok) {
-                    data.score = 0; save(); render();
-                    tg.showAlert("✅ SOLICITUD ENVIADA.\nTu pago llegará en 48 horas.");
-                }
+                if(ok) { data.score = 0; save(); render(); tg.showAlert("✅ SOLICITUD ENVIADA.\nTu pago llegará en 48 horas."); }
             });
         }
 
